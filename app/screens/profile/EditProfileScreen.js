@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     imagePicker: {
         width: 50,
         height: 50,
-        borderColor: colors.secondary,
+        borderColor: colors.mediumGray,
         borderWidth: 3,
         borderRadius: 25,
         position: 'absolute',

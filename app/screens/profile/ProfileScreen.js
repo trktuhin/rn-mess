@@ -33,18 +33,18 @@ function ProfileScreen({ navigation }) {
                 <ListItem
                     style={styles.listItem}
                     title="Edit Profile"
-                    IconComponent={<Icon name="pencil" bgColor={colors.secondary} />}
+                    IconComponent={<Icon name="pencil" bgColor={colors.primary} />}
                     onPress={() => navigation.navigate(routes.EDITPROFILE, { currentUser: userData })} />
                 <ListItem
                     style={styles.listItem}
                     title="Change Password"
-                    IconComponent={<Icon name="key" bgColor={colors.danger} />}
+                    IconComponent={<Icon name="key" bgColor={colors.mediumGray} />}
                     onPress={() => navigation.navigate(routes.CHANGE_PASSWORD)} />
 
                 <ListItem
                     title="Log Out"
                     IconComponent={
-                        <Icon name="logout" bgColor={colors.lightYellow} />
+                        <Icon name="logout" bgColor={colors.danger} />
                     }
                     onPress={logout}
                 />

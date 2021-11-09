@@ -28,8 +28,7 @@ function CreateJoin(props) {
     const navigation = useNavigation();
 
     const handleSubmitMessForm = async (messFormData, { resetForm }) => {
-        console.log("original date", messFormData.updateTimeFrom);
-        console.log("converted date", convertUTCDateToLocalDate(messFormData.updateTimeFrom));
+        setLoading(true);
         const model = {
             messName: messFormData.messName,
             location: messFormData.location,
@@ -38,7 +37,6 @@ function CreateJoin(props) {
             secretCode: messFormData.secretCode
         };
         var response = await messApi.createMess(model);
-        //console.log(response);
         setLoading(false);
         if (!response.ok) {
             return alert("Couldn't create mess.");
@@ -96,14 +94,14 @@ function CreateJoin(props) {
                             initialValues={{
                                 messName: '',
                                 location: '',
-                                updateTimeFrom: '',
-                                updateTimeTo: '',
+                                updateTimeFrom: new Date(),
+                                updateTimeTo: new Date(),
                                 secretCode: ''
                             }}
                             onSubmit={handleSubmitMessForm}
                             validationSchema={messFormValidationSchema}
                         >
-                            <AppFormField icon="account" name="messName" maxLength={255} placeholder="Mess Name" />
+                            <AppFormField icon="city" name="messName" maxLength={255} placeholder="Mess Name" />
                             <AppFormField icon="home" name="location" maxLength={255} placeholder="Location" />
                             <AppDatePicker name="updateTimeFrom" mode="time" placeholder="Update Time From" />
                             <AppDatePicker name="updateTimeTo" mode="time" placeholder="Update Time To" />

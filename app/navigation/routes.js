@@ -6,6 +6,7 @@ export default Object.freeze({
     MEMBERDETAILS: "MemberDetails",
     NEWEDITMEMBER: "NewEditMember",
     MESS: "Mess",
+    UPDATE_MESS: "UpdateMess",
     PROFILE: "Profile",
     EDITPROFILE: "EditProfile",
     CHANGE_PASSWORD: "ChangePassword"

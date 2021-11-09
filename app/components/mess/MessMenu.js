@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import ListItem from '../list/ListItem';
 import Icon from '../Icon';
-import colors from '../../config/colors';
+import routes from '../../navigation/routes';
 
 function MessMenu() {
+    const navigation = useNavigation();
+
     return (
         <View style={styles.container}>
             <ListItem
@@ -38,7 +41,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Update Mess"
                 IconComponent={<Icon name="update" bgColor="#c96518" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.UPDATE_MESS) }} />
         </View>
     );
 }
