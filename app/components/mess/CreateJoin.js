@@ -103,8 +103,8 @@ function CreateJoin(props) {
                         >
                             <AppFormField icon="city" name="messName" maxLength={255} placeholder="Mess Name" />
                             <AppFormField icon="home" name="location" maxLength={255} placeholder="Location" />
-                            <AppDatePicker name="updateTimeFrom" mode="time" placeholder="Update Time From" />
-                            <AppDatePicker name="updateTimeTo" mode="time" placeholder="Update Time To" />
+                            <AppDatePicker initaialDate={new Date()} label="Update Time From" name="updateTimeFrom" mode="time" placeholder="Update Time From" />
+                            <AppDatePicker initaialDate={new Date()} label="Update Time To" name="updateTimeTo" mode="time" placeholder="Update Time To" />
                             <AppFormField icon="key-star" width={150} name="secretCode" maxLength={4} keyboardType="numeric" placeholder="Secret Code" />
                             <SumbitButton title="Create Mess" />
                         </AppForm>

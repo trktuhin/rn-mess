@@ -13,8 +13,7 @@ const MemberNavigator = () => (
     <Stack.Navigator>
         <Stack.Screen name={routes.MEMBERS} component={MembersScreen}
             options={({ navigation }) => ({
-                title: 'Members',
-                headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER, { id: 0 })} />
+                title: 'Members'
             })} />
         <Stack.Screen name={routes.MEMBERDETAILS} component={MemberDetailsScreen}
             options={({ route }) => ({ title: 'Details of ' + route.params.member.firstName })} />

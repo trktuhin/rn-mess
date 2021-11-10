@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import AppButton from '../../components/AppButton';
 import useAuth from '../../auth/useAuth';
 import CreateJoin from '../../components/mess/CreateJoin';
 import MessMenu from '../../components/mess/MessMenu';

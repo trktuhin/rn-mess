@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useFormikContext } from 'formik';
 import * as Yup from 'yup';
 
+import ActivityIndication from '../../components/ActivityIndicator';
 import { AppForm, AppFormField } from '../../components/form';
 import IconButton from '../../components/IconButton';
 import colors from '../../config/colors';
+import memberApi from '../../api/member';
 
 const validationSchema = Yup.object().shape({
     firstName: Yup.string().required().min(1).label('First Name'),
@@ -18,6 +20,7 @@ const validationSchema = Yup.object().shape({
 
 function NewEditMemberScreen({ route, navigation }) {
     const [mode, setMode] = useState("New");
+    const [loading, setLoading] = useState(false);
     const formRef = useRef();
     useEffect(() => {
         navigation.setOptions({
@@ -36,32 +39,50 @@ function NewEditMemberScreen({ route, navigation }) {
             setMode("Edit");
         }
     }, [route, navigation]);
-    const handleSubmit = async (member, { resetForm }) => {
-        console.log(member);
-        resetForm();
+    const handleSubmit = async (member) => {
+        setLoading(true);
+        const model = {
+            firstName: member.firstName,
+            lastName: member.lastName,
+            dBreakfast: member.breakfast,
+            dLunch: member.lunch,
+            dDinner: member.dinner
+        };
+        if (mode == "New") {
+            var response = await memberApi.addMember(model);
+            if (!response.ok) {
+                return alert('Could not add new member');
+            }
+            navigation.pop();
+        }
+        setLoading(false);
     }
     return (
-        <View style={styles.container}>
-            <AppForm
-                initialValues={{
-                    firstName: '',
-                    lastName: '',
-                    breakfast: '',
-                    lunch: '',
-                    dinner: ''
-                }}
-                onSubmit={handleSubmit}
-                validationSchema={validationSchema}
-                formRef={formRef}
-            >
-                <AppFormField icon="account" name="firstName" maxLength={255} placeholder="First Name" />
-                <AppFormField icon="account" name="lastName" maxLength={255} placeholder="Last Name" />
-                <AppFormField icon="food-fork-drink" width={150} name="breakfast" maxLength={8} keyboardType="numeric" placeholder="Breakfast" />
-                <AppFormField icon="food" width={150} name="lunch" maxLength={8} keyboardType="numeric" placeholder="Lunch" />
-                <AppFormField icon="silverware-fork-knife" width={150} name="dinner" maxLength={8} keyboardType="numeric" placeholder="Dinner" />
-                {/* <SumbitButton title="Post" /> */}
-            </AppForm>
-        </View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps='handled'
+        >
+            <View style={styles.container}>
+                {loading && <ActivityIndication visible={loading} />}
+                <AppForm
+                    initialValues={{
+                        firstName: '',
+                        lastName: '',
+                        breakfast: '',
+                        lunch: '',
+                        dinner: ''
+                    }}
+                    onSubmit={handleSubmit}
+                    validationSchema={validationSchema}
+                    formRef={formRef}
+                >
+                    <AppFormField icon="account" name="firstName" maxLength={255} placeholder="First Name" />
+                    <AppFormField icon="account" name="lastName" maxLength={255} placeholder="Last Name" />
+                    <AppFormField icon="food-fork-drink" width={150} name="breakfast" maxLength={8} keyboardType="numeric" placeholder="Breakfast" />
+                    <AppFormField icon="food" width={150} name="lunch" maxLength={8} keyboardType="numeric" placeholder="Lunch" />
+                    <AppFormField icon="silverware-fork-knife" width={150} name="dinner" maxLength={8} keyboardType="numeric" placeholder="Dinner" />
+                </AppForm>
+            </View>
+        </ScrollView>
     );
 }
 

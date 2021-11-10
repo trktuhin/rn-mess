@@ -1,54 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 
-import ListItem from '../../components/list/ListItem';
-import ListItemSeparator from '../../components/list/ListItemSeparator';
 import routes from '../../navigation/routes';
-
-const members = [
-    {
-        id: 1,
-        firstName: 'Robin',
-        lastName: 'Khan',
-        imageUrl: 'https://e7.pngegg.com/pngimages/643/98/png-clipart-computer-icons-avatar-mover-business-flat-design-corporate-elderly-care-microphone-heroes-thumbnail.png',
-        mobile: '01677048891',
-        profession: 'Software Engineer'
-    },
-    {
-        id: 2,
-        firstName: 'Aamir',
-        lastName: 'Khan',
-        imageUrl: 'https://e7.pngegg.com/pngimages/643/98/png-clipart-computer-icons-avatar-mover-business-flat-design-corporate-elderly-care-microphone-heroes-thumbnail.png',
-        mobile: '01677048892',
-        profession: 'Actor'
-    },
-    {
-        id: 3,
-        firstName: 'Sharif',
-        lastName: 'Khan',
-        imageUrl: 'https://e7.pngegg.com/pngimages/643/98/png-clipart-computer-icons-avatar-mover-business-flat-design-corporate-elderly-care-microphone-heroes-thumbnail.png',
-        mobile: '01677048893',
-        profession: 'Biologist'
-    }
-];
+import IconButton from '../../components/IconButton';
+import colors from '../../config/colors';
+import useAuth from '../../auth/useAuth';
+import AppButton from '../../components/AppButton';
+import memberApi from '../../api/member';
+import ListItem from '../../components/list/ListItem';
+import globalVariables from '../../globalVariables';
+import ListItemSeparator from '../../components/list/ListItemSeparator';
 
 function MembersScreen({ navigation }) {
+    const [messOption, setMessOption] = useState();
+    const [members, setMembers] = useState([]);
+    const { decodedToken, token } = useAuth();
+    useEffect(() => {
+        decodedToken().then((option) => {
+            console.log("Mess Options", option);
+            setMessOption(option);
+            if (option.messRole == "admin") {
+                navigation.setOptions({
+                    headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER, { id: 0 })} />
+                });
+            }
+        }).catch((err) => console.log(err));
+
+    }, [token]);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            initializeMembers();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    const initializeMembers = async () => {
+        // here only fetch member
+        const response = await memberApi.getMembers();
+        if (!response.ok) {
+            return alert('Could not fetch members');
+        }
+        setMembers(response.data);
+    }
+
     return (
-        <View>
-            <FlatList data={members}
-                keyExtractor={member => member.id.toString()}
-                ItemSeparatorComponent={ListItemSeparator}
-                renderItem={({ item }) => <ListItem
-                    title={item.firstName + ' ' + item.lastName}
-                    subtitle={item.mobile}
-                    image={{ uri: item.imageUrl }}
-                    onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
+        <View style={styles.container}>
+            {messOption && (parseInt(messOption.MessId) === 0) &&
+                (<View>
+                    <AppButton title="Create or Join Mess" onPress={() => navigation.navigate(routes.MESS)} />
+                </View>)}
+
+            {members.length > 0 && (
+                <View>
+                    <FlatList data={members}
+                        keyExtractor={member => member.id.toString()}
+                        ItemSeparatorComponent={ListItemSeparator}
+                        renderItem={({ item }) => <ListItem
+                            title={item.firstName + ' ' + item.lastName}
+                            subtitle={item.mobile ? item.mobile : 'Manual'}
+                            image={item.photoName ? { uri: globalVariables.IMAGE_BASE + item.photoName } : require("../../assets/defaultuser.jpg")}
+                            onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
+                </View>
+            )}
         </View>
     );
 }
-
 const styles = StyleSheet.create({
-    container: {}
+    container: {
+        padding: 15
+    }
 });
 
 export default MembersScreen;
