@@ -17,7 +17,7 @@ function MembersScreen({ navigation }) {
     const { decodedToken, token } = useAuth();
     useEffect(() => {
         decodedToken().then((option) => {
-            console.log("Mess Options", option);
+            //console.log("Mess Options", option);
             setMessOption(option);
             if (option.messRole == "admin") {
                 navigation.setOptions({

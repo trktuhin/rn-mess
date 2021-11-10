@@ -10,7 +10,6 @@ function AppFormField({ name, width, ...otherProps }) {
             <AppTextInput
                 onBlur={() => setFieldTouched(name)}
                 onChangeText={text => setFieldValue(name, text)}
-                textContentType="emailAddress"
                 width={width}
                 value={values[name]}
                 {...otherProps}

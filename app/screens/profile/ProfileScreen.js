@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Image, ScrollView } from 'react-native';
-import Screen from '../../components/Screen';
+
 import AppText from '../../components/AppText';
-import AppButton from '../../components/AppButton';
 import authStorage from '../../auth/storage';
 import useAuth from '../../auth/useAuth';
 import globalVariables from '../../globalVariables';
@@ -10,15 +9,17 @@ import colors from '../../config/colors';
 import ListItem from '../../components/list/ListItem';
 import Icon from '../../components/Icon';
 import routes from '../../navigation/routes';
+import ActivityIndication from '../../components/ActivityIndicator';
 
 function ProfileScreen({ navigation }) {
     const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
-
         const unsubscribe = navigation.addListener('focus', () => {
+            setLoading(true);
             authStorage.getUser().then(data => {
                 setUserData({ ...data });
-            }).catch(error => console.log(error));
+            }).catch(error => console.log(error)).finally(() => setLoading(false));
         });
         return unsubscribe;
     }, [navigation]);
@@ -27,8 +28,10 @@ function ProfileScreen({ navigation }) {
 
     return (
         <ScrollView>
-            <View style={styles.container}>
-                {userData?.photoUrl && <Image style={styles.profilePic} source={{ uri: globalVariables.IMAGE_BASE + userData.photoUrl }} />}
+            {loading && <ActivityIndication visible={loading} />}
+            {userData && <View style={styles.container}>
+                <Image style={styles.profilePic} source={(userData.photoUrl && userData.photoUrl !== "user.jpg") ? { uri: globalVariables.IMAGE_BASE + userData.photoUrl } : require("../../assets/defaultuser.jpg")} />
+
                 <AppText style={styles.title}>{userData?.firstName} {userData?.lastName}</AppText>
                 <ListItem
                     style={styles.listItem}
@@ -48,7 +51,7 @@ function ProfileScreen({ navigation }) {
                     }
                     onPress={logout}
                 />
-            </View>
+            </View>}
         </ScrollView>
     );
 }

@@ -9,6 +9,7 @@ import { AppForm, AppFormField, SumbitButton, ErrorMessage } from '../../compone
 import authApi from '../../api/auth';
 import ActivityIndication from '../../components/ActivityIndicator';
 import useAuth from '../../auth/useAuth';
+import authStorage from '../../auth/storage';
 
 const validationSchema = Yup.object().shape({
     mobile: Yup.string().required().min(1).matches(/^01\d{9}$/, 'Mobile number is not valid').label('Mobile number'),
@@ -27,6 +28,11 @@ function LoginScreen({ navigation }) {
         if (!response.ok) return setLoginFailed(true);
         setLoginFailed(false);
         auth.login(response.data);
+        const user = await authStorage.getUser();
+        if (!user?.isMobileVerified) {
+            //send otp then navigate
+            navigation.navigate(routes.OTP);
+        }
     }
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}

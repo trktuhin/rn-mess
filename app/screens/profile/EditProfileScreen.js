@@ -64,7 +64,7 @@ function EditProfileScreen({ route, navigation }) {
             {loading && <ActivityIndication visible={loading} />}
             <View style={styles.container}>
                 <View style={styles.imageContainer}>
-                    <Image style={styles.profilePic} source={{ uri: selectedImageUri }} />
+                    <Image style={styles.profilePic} source={selectedImageUri.includes("user.jpg") ? require("../../assets/defaultuser.jpg") : { uri: selectedImageUri }} />
                     <ImageInput style={styles.imagePicker} size={30} onSelectImage={onSelectImage} />
                 </View>
                 <AppForm

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { useFormikContext } from 'formik';
 import * as Yup from 'yup';
 
 import ActivityIndication from '../../components/ActivityIndicator';
@@ -34,7 +33,7 @@ function NewEditMemberScreen({ route, navigation }) {
         });
 
         var id = route.params?.id;
-        console.log(id);
+        //console.log(id);
         if (id !== 0) {
             setMode("Edit");
         }

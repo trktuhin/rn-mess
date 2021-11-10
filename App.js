@@ -30,7 +30,7 @@ export default function App() {
       .build();
 
     connectionHub.on('ReceiveToken', data => {
-      console.log("hello new token");
+      //console.log("hello new token");
       authStorage.storeToken(data.token);
       setToken(data.token);
     });
@@ -54,7 +54,7 @@ export default function App() {
     let reconnectInterval;
     if (user && connectionHub.connection.connectionState == 2) { // 2 = disconnected; 0 = connceted
       reconnectInterval = setInterval(() => {
-        console.log("Trying to reconnect");
+        //console.log("Trying to reconnect");
 
         connectionHub.start().then(() => {
           clearInterval(reconnectInterval);
@@ -69,6 +69,9 @@ export default function App() {
       authStorage.getDecodedToken().then(decodedToken => startHubConnection(decodedToken.nameid))
         .catch(err => console.log(err));
 
+    } else {
+      //console.log("Connection disconnect For log out");
+      connectionHub = null;
     }
   }, [user]);
 
@@ -77,7 +80,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setUser, token }}>
       <NavigationContainer>
-        {user ? <AppNavigator /> : <AuthNavigator />}
+        {user?.isMobileVerified ? <AppNavigator /> : <AuthNavigator />}
       </NavigationContainer>
     </AuthContext.Provider>
   );

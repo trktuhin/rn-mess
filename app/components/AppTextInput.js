@@ -5,12 +5,12 @@ import DefaultStyles from '../config/styles';
 import colors from '../config/colors';
 import AppText from './AppText';
 
-function AppTextInput({ prefix, icon, width = '100%', ...otherProps }) {
+function AppTextInput({ prefix, icon, width = '100%', style, ...otherProps }) {
     return (
         <View style={[styles.container, { width }]}>
             {icon && <MaterialCommunityIcons name={icon} size={20} color={DefaultStyles.colors.mediumGray} style={styles.icon} />}
             {prefix && <AppText style={styles.prefix}>{prefix}</AppText>}
-            <TextInput placeholderTextColor={colors.mediumGray} style={DefaultStyles.textInput} {...otherProps} />
+            <TextInput placeholderTextColor={colors.mediumGray} style={[DefaultStyles.textInput, style]} {...otherProps} />
         </View>
     );
 }
