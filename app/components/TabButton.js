@@ -11,10 +11,10 @@ function TabButton({ title, onPress, isActive, bgColor = "white", ...otherProps 
             {
                 backgroundColor: isActive ? colors.lightGray : colors[bgColor],
                 borderBottomWidth: isActive ? 2 : 0,
-                borderBottomColor: isActive ? colors.secondary : null
+                borderBottomColor: isActive ? colors.primary : null
             }
             ]}>
-                <Text style={[styles.text, { color: isActive ? colors.secondary : colors.mediumGray }]}>{title}</Text>
+                <Text style={[styles.text, { color: isActive ? colors.primary : colors.mediumGray }]}>{title}</Text>
             </View>
         </TouchableWithoutFeedback>
     );

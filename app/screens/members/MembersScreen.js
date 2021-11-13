@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Modal, Text, Pressable } from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
 
 import routes from '../../navigation/routes';
 import IconButton from '../../components/IconButton';
@@ -10,14 +11,37 @@ import memberApi from '../../api/member';
 import ListItem from '../../components/list/ListItem';
 import globalVariables from '../../globalVariables';
 import ListItemSeparator from '../../components/list/ListItemSeparator';
+import ActivityIndication from '../../components/ActivityIndicator';
+import TabButton from '../../components/TabButton';
+import MemberRequestList from '../../components/member/MemberRequestList';
+import AppText from '../../components/AppText';
+import DefaultTextButton from '../../components/DefaultTextButton';
+
 
 function MembersScreen({ navigation }) {
+    const [loading, setLoading] = useState(true);
     const [messOption, setMessOption] = useState();
     const [members, setMembers] = useState([]);
-    const { decodedToken, token } = useAuth();
+    const [memberRequests, setmemberRequests] = useState([]);
+    const [memberTab, setMemberTab] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [requestedMember, setrequestedMember] = useState(null);
+    const [replacedMemberId, setreplacedMemberId] = useState(null);
+    const { decodedToken, token, recievedRequest, setRecievedRequest } = useAuth();
+
+    useEffect(() => {
+        if (recievedRequest == false) {
+            return;
+        }
+        // console.log('member request signal r invoked');
+        initializeMemberRequests();
+        if (recievedRequest == true) {
+            setRecievedRequest(false);
+        }
+    }, [recievedRequest]);
+
     useEffect(() => {
         decodedToken().then((option) => {
-            //console.log("Mess Options", option);
             setMessOption(option);
             if (option.messRole == "admin") {
                 navigation.setOptions({
@@ -31,17 +55,98 @@ function MembersScreen({ navigation }) {
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             initializeMembers();
+            setLoading(false);
         });
         return unsubscribe;
     }, [navigation]);
 
+
+
     const initializeMembers = async () => {
-        // here only fetch member
         const response = await memberApi.getMembers();
         if (!response.ok) {
             return alert('Could not fetch members');
         }
         setMembers(response.data);
+    }
+
+    const initializeMemberRequests = async () => {
+        const response = await memberApi.getMemberRequests();
+        if (!response.ok) {
+            return alert('Could not fetch member requests');
+        }
+        setmemberRequests(response.data);
+        // console.log("requests", response.data);
+    }
+
+    const isMemberTab = (value) => {
+        if (value === true) {
+            initializeMembers();
+            setMemberTab(true);
+        }
+        else {
+            initializeMemberRequests();
+            setMemberTab(false);
+        }
+    }
+
+    const handleDeleteRequest = (userId) => {
+        Alert.alert('Are you sure?', 'The request will be deleted but can send you request again.',
+            [
+                { text: 'Cancel' },
+                {
+                    text: 'Yes', onPress: () => {
+                        setLoading(true);
+                        memberApi.deleteRequest(userId).then((response) => {
+                            if (!response.ok) {
+                                return alert(response?.data ? response.data : 'Could not delete request');
+                            }
+                            isMemberTab(false);
+                        }).catch((err) => console.log(err)).finally(() => setLoading(false))
+                    }
+                }
+            ]);
+    }
+
+    const handleAcceptNewMember = (userId) => {
+        Alert.alert('Are you sure?', 'A new member will be added.',
+            [
+                { text: 'Cancel' },
+                {
+                    text: 'Yes', onPress: () => {
+                        setLoading(true);
+                        memberApi.approveNewRequst(userId).then((response) => {
+                            if (!response.ok) {
+                                return alert(response?.data ? response.data : 'Could not accept request');
+                            }
+                            isMemberTab(true);
+                        }).catch((err) => console.log(err)).finally(() => setLoading(false))
+                    }
+                }
+            ]);
+    }
+
+    const handleOpenModal = (user) => {
+        setrequestedMember(user);
+        setModalVisible(true);
+    }
+
+    const handleReplaceMember = () => {
+        if (replacedMemberId == null) {
+            return alert('Please select a member to replace');
+        }
+        setLoading(true);
+        const model = {
+            userId: requestedMember.userId,
+            memberId: replacedMemberId
+        };
+        memberApi.replaceMember(model).then((response) => {
+            if (!response.ok) {
+                return alert(response?.data ? response.data : 'Could not replace member');
+            }
+            setModalVisible(false);
+            isMemberTab(true);
+        }).catch((err) => console.log(err)).finally(() => setLoading(false))
     }
 
     return (
@@ -50,8 +155,16 @@ function MembersScreen({ navigation }) {
                 (<View>
                     <AppButton title="Create or Join Mess" onPress={() => navigation.navigate(routes.MESS)} />
                 </View>)}
-
-            {members.length > 0 && (
+            {loading && <ActivityIndication visible={loading} />}
+            {messOption?.MessId > 0 && <View style={styles.tabContainer}>
+                <View style={styles.tabButtonContainer}>
+                    <TabButton onPress={() => isMemberTab(true)} isActive={memberTab} title="Active Members" />
+                </View>
+                <View style={styles.tabButtonContainer}>
+                    <TabButton onPress={() => isMemberTab(false)} isActive={!memberTab} title="Member Requests" />
+                </View>
+            </View>}
+            {memberTab && members.length > 0 && (
                 <View>
                     <FlatList data={members}
                         keyExtractor={member => member.id.toString()}
@@ -63,13 +176,133 @@ function MembersScreen({ navigation }) {
                             onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
                 </View>
             )}
+            {!memberTab && memberRequests.length > 0 && (
+                <View>
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {
+                            setModalVisible(!modalVisible);
+                        }}
+                    >
+                        <View style={styles.centeredView}>
+                            <View style={styles.modalView}>
+                                <AppText style={styles.hintModal}>{`${requestedMember?.firstName} ${requestedMember?.lastName}`} will replace the member you select.</AppText>
+                                <RNPickerSelect
+                                    onValueChange={(value) => setreplacedMemberId(value)}
+                                    placeholder={{
+                                        label: 'Select a member',
+                                        value: null,
+                                        color: colors.primary,
+                                    }}
+                                    items={members.map((member) => {
+                                        return {
+                                            label: `${member.firstName} ${member.lastName}`,
+                                            value: `${member.id}`
+                                        }
+                                    })
+                                    }
+                                    style={pickerSelectStyles}
+                                />
+                                <View style={styles.modalFooterButton}>
+                                    <DefaultTextButton title="Close" bgColor="mediumGray" onPress={() => setModalVisible(false)} />
+                                    <DefaultTextButton title="Replace Member" bgColor="primary" onPress={() => handleReplaceMember()} />
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <FlatList data={memberRequests}
+                        keyExtractor={mr => mr.id.toString()}
+                        ItemSeparatorComponent={ListItemSeparator}
+                        renderItem={({ item }) => <MemberRequestList
+                            name={`${item.user.firstName} ${item.user.lastName}`}
+                            image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
+                            onDeleteMember={() => handleDeleteRequest(item.user.userId)}
+                            onNewMember={() => handleAcceptNewMember(item.user.userId)}
+                            onExistingMember={() => handleOpenModal(item.user)}
+                        />} />
+                </View>
+            )}
         </View>
     );
 }
 const styles = StyleSheet.create({
     container: {
         padding: 15
+    },
+    tabContainer: {
+        flexDirection: 'row',
+    },
+    tabButtonContainer: {
+        flex: 1
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 10,
+        width: '80%',
+        backgroundColor: "white",
+        borderRadius: 10,
+        padding: 15,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalFooterButton: {
+        flexDirection: 'row',
+        marginTop: 10,
+        width: '100%',
+        justifyContent: 'flex-end'
+    },
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: "center"
+    },
+    hintModal: {
+        marginVertical: 10,
+        color: colors.mediumGray,
     }
+
+});
+
+const pickerSelectStyles = StyleSheet.create({
+    inputIOS: {
+        fontSize: 18,
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: 'gray',
+        borderRadius: 4,
+        color: 'black',
+        paddingRight: 30, // to ensure the text is never behind the icon
+    },
+    inputAndroid: {
+        fontSize: 18,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderWidth: 0.5,
+        borderColor: 'purple',
+        borderRadius: 8,
+        color: 'black',
+        paddingRight: 30, // to ensure the text is never behind the icon
+    },
 });
 
 export default MembersScreen;

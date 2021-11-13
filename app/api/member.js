@@ -15,4 +15,38 @@ const deleteMember = (id) => {
     return client.delete(endPoint);
 }
 
-export default { getMembers, addMember, deleteMember };
+const sendRequest = (model) => {
+    const endPoint = '/members/addRequest';
+    return client.post(endPoint, model);
+}
+
+const getMemberRequests = () => {
+    const endPoint = "/members/getRequests";
+    return client.get(endPoint);
+}
+
+const deleteRequest = (userId) => {
+    const endPoint = `/members/deleteRequest/${userId}`;
+    return client.post(endPoint, {});
+}
+
+const approveNewRequst = (userId) => {
+    const endPoint = `/members/approveRequest/${userId}`;
+    return client.post(endPoint, {});
+}
+
+const replaceMember = (model) => {
+    const endPoint = '/members/replaceMember';
+    return client.post(endPoint, model);
+}
+
+export default {
+    getMembers,
+    addMember,
+    deleteMember,
+    sendRequest,
+    getMemberRequests,
+    deleteRequest,
+    approveNewRequst,
+    replaceMember
+};

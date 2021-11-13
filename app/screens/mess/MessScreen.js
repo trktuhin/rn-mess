@@ -4,14 +4,17 @@ import { View, StyleSheet } from 'react-native';
 import useAuth from '../../auth/useAuth';
 import CreateJoin from '../../components/mess/CreateJoin';
 import MessMenu from '../../components/mess/MessMenu';
+import ActivityIndication from '../../components/ActivityIndicator';
 
 function MessScreen({ route, navigation }) {
     const [messOption, setMessOption] = useState();
     const [messId, setMessId] = useState(0);
+    const [loading, setLoading] = useState(true);
     const { decodedToken, token } = useAuth();
 
     useEffect(() => {
         intializeMessOption();
+        setLoading(false);
     }, [token]);
 
     const intializeMessOption = async () => {
@@ -26,12 +29,15 @@ function MessScreen({ route, navigation }) {
     }
 
     return (
-        <View>
-            {(messOption && messOption.isMobileVerified == "verified" && messId > 0) ?
-                <MessMenu /> :
-                <CreateJoin title="Create/Join Mess" />
-            }
-        </View>
+        <>
+            {loading && <ActivityIndication visible={loading} />}
+            {messOption && <View>
+                {(messOption.isMobileVerified == "verified" && messId > 0) ?
+                    <MessMenu /> :
+                    <CreateJoin title="Create/Join Mess" />
+                }
+            </View>}
+        </>
     );
 }
 

@@ -29,7 +29,7 @@ function MemberDetailsScreen({ route, navigation }) {
                         setLoading(true);
                         var response = memberApi.deleteMember(member.id).then((response) => {
                             if (!response.ok) {
-                                return alert("Couldn't delete member.");
+                                return alert(response?.data ? response.data : 'Could not delete member');
                             }
                             navigation.pop();
                         }).catch((err) => console.log(err)).finally(() => setLoading(false))

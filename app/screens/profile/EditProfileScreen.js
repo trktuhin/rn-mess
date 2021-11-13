@@ -15,8 +15,8 @@ import useAuth from '../../auth/useAuth';
 const validationSchema = Yup.object().shape({
     firstName: Yup.string().required().min(2).label('First Name'),
     lastName: Yup.string().required().min(2).label('Last Name'),
-    email: Yup.string().email().label("Email address"),
-    profession: Yup.string()
+    email: Yup.string("Please enter valid email address").email("Please enter valid email address").label("Email address"),
+    profession: Yup.string("Please enter your profession")
 });
 
 function EditProfileScreen({ route, navigation }) {
@@ -69,10 +69,10 @@ function EditProfileScreen({ route, navigation }) {
                 </View>
                 <AppForm
                     initialValues={{
-                        firstName: currentUser ? currentUser.firstName : '',
-                        lastName: currentUser ? currentUser.lastName : '',
-                        email: currentUser ? currentUser.email : '',
-                        profession: currentUser ? currentUser.profession : ''
+                        firstName: currentUser?.firstName ? currentUser.firstName : "",
+                        lastName: currentUser?.lastName ? currentUser.lastName : "",
+                        email: currentUser?.email ? currentUser.email : "",
+                        profession: currentUser?.profession ? currentUser.profession : ""
                     }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}

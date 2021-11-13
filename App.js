@@ -12,6 +12,7 @@ import globalVariables from './app/globalVariables';
 export default function App() {
   const [user, setUser] = useState();
   const [token, setToken] = useState(null);
+  const [recievedRequest, setRecievedRequest] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   let connectionHub;
@@ -36,7 +37,8 @@ export default function App() {
     });
 
     connectionHub.on('ReceiveRequest', data => {
-      console.log("New Request", data);
+      // console.log("new quest rec");
+      setRecievedRequest(true);
     });
 
     connectionHub.start()
@@ -78,7 +80,7 @@ export default function App() {
   if (!isReady) return <AppLoading startAsync={restoreUser} onFinish={() => setIsReady(true)} onError={() => console.log("error")} />
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token }}>
+    <AuthContext.Provider value={{ user, setUser, token, recievedRequest, setRecievedRequest }}>
       <NavigationContainer>
         {user?.isMobileVerified ? <AppNavigator /> : <AuthNavigator />}
       </NavigationContainer>

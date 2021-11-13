@@ -4,7 +4,7 @@ import authStorage from './storage';
 import jwtDecode from "jwt-decode";
 
 export default useAuth = () => {
-    const { user, setUser, token } = useContext(AuthContext);
+    const { user, setUser, token, recievedRequest, setRecievedRequest } = useContext(AuthContext);
 
     const decodedToken = async () => {
         const token = await authStorage.getToken();
@@ -33,5 +33,5 @@ export default useAuth = () => {
         authStorage.storeToken(token);
     }
 
-    return { user, login, logout, updateUser, decodedToken, updateToken, token };
+    return { user, login, logout, updateUser, decodedToken, updateToken, token, recievedRequest, setRecievedRequest };
 }

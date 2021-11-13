@@ -8,6 +8,7 @@ import { AppForm, AppFormField, SumbitButton } from '../../components/form';
 import AppDatePicker from '../form/AppDatePicker';
 import messApi from '../../api/mess';
 import ActivityIndication from '../ActivityIndicator';
+import memberApi from '../../api/member';
 
 const messFormValidationSchema = Yup.object().shape({
     messName: Yup.string().required().min(1).label('Mess Name'),
@@ -55,7 +56,17 @@ function CreateJoin(props) {
     }
 
     const handleSubmitMessJoin = async (messJoinData, { resetForm }) => {
-        console.log(messJoinData);
+        setLoading(true);
+        const model = {
+            messName: messJoinData.messName,
+            secretCode: messJoinData.secretCode
+        };
+        var response = await memberApi.sendRequest(model);
+        setLoading(false);
+        if (!response.ok) {
+            return alert(response.data ? response.data : "Couldn't send request.");
+        }
+        alert("Sent Request Successfully");
     }
 
     return (
