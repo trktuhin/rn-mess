@@ -7,5 +7,6 @@ export default {
     mediumGray: "#6e6969",
     darkGary: "#0c0c0c",
     danger: "#ff5252",
-    lightYellow: "#ffe66d"
+    lightYellow: "#ffe66d",
+    darkYellow: "#d1b815"
 };

@@ -15,6 +15,11 @@ const deleteMember = (id) => {
     return client.delete(endPoint);
 }
 
+const deleteMembership = (id) => {
+    const endPoint = `/members/deleteMembership/${id}`;
+    return client.delete(endPoint);
+}
+
 const sendRequest = (model) => {
     const endPoint = '/members/addRequest';
     return client.post(endPoint, model);
@@ -40,7 +45,23 @@ const replaceMember = (model) => {
     return client.post(endPoint, model);
 }
 
+const getMember = (memberId) => {
+    const endPoint = `/members/${memberId}`;
+    return client.get(endPoint);
+}
+
+const makeManager = (memberId) => {
+    const endPoint = `/members/makeManager/${memberId}`;
+    return client.get(endPoint);
+}
+
+const deleteManagership = (memberId) => {
+    const endPoint = `/members/deleteManagership/${memberId}`;
+    return client.get(endPoint);
+}
+
 export default {
+    getMember,
     getMembers,
     addMember,
     deleteMember,
@@ -48,5 +69,8 @@ export default {
     getMemberRequests,
     deleteRequest,
     approveNewRequst,
-    replaceMember
+    replaceMember,
+    deleteMembership,
+    makeManager,
+    deleteManagership
 };

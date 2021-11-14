@@ -20,6 +20,7 @@ const validationSchema = Yup.object().shape({
 function NewEditMemberScreen({ route, navigation }) {
     const [mode, setMode] = useState("New");
     const [loading, setLoading] = useState(false);
+    const [selectedMember, setselectedMember] = useState(null);
     const formRef = useRef();
     useEffect(() => {
         navigation.setOptions({
@@ -35,7 +36,11 @@ function NewEditMemberScreen({ route, navigation }) {
         var id = route.params?.id;
         //console.log(id);
         if (id !== 0) {
+            setLoading(true);
             setMode("Edit");
+            memberApi.getMember(id).then(response => {
+                setselectedMember(response.data);
+            }).catch(err => console.log(err)).finally(() => setLoading(false));
         }
     }, [route, navigation]);
     const handleSubmit = async (member) => {
@@ -62,13 +67,13 @@ function NewEditMemberScreen({ route, navigation }) {
         >
             <View style={styles.container}>
                 {loading && <ActivityIndication visible={loading} />}
-                <AppForm
+                {(mode == "New" || (mode !== "New" && !loading)) && <AppForm
                     initialValues={{
-                        firstName: '',
-                        lastName: '',
-                        breakfast: '',
-                        lunch: '',
-                        dinner: ''
+                        firstName: selectedMember?.firstName ? selectedMember.firstName : '',
+                        lastName: selectedMember?.lastName ? selectedMember.lastName : '',
+                        breakfast: selectedMember?.dBreakfast ? selectedMember.dBreakfast.toString() : '0',
+                        lunch: selectedMember?.dLunch ? selectedMember.dLunch.toString() : '0',
+                        dinner: selectedMember?.dDinner ? selectedMember.dDinner.toString() : '0'
                     }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}
@@ -79,7 +84,7 @@ function NewEditMemberScreen({ route, navigation }) {
                     <AppFormField icon="food-fork-drink" width={150} name="breakfast" maxLength={8} keyboardType="numeric" placeholder="Breakfast" />
                     <AppFormField icon="food" width={150} name="lunch" maxLength={8} keyboardType="numeric" placeholder="Lunch" />
                     <AppFormField icon="silverware-fork-knife" width={150} name="dinner" maxLength={8} keyboardType="numeric" placeholder="Dinner" />
-                </AppForm>
+                </AppForm>}
             </View>
         </ScrollView>
     );

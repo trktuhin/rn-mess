@@ -26,14 +26,20 @@ export default function App() {
 
   const startHubConnection = (username) => {
     connectionHub = new signalR.HubConnectionBuilder()
-      .withUrl(globalVariables.BASE_URL + 'tokenUpdate?username=' + username)
+      .withUrl(globalVariables.BASE_URL + 'tokenUpdate?username=' + username, {
+        skipNegotiation: true,
+        transport: signalR.HttpTransportType.WebSockets
+      })
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
     connectionHub.on('ReceiveToken', data => {
-      //console.log("hello new token");
-      authStorage.storeToken(data.token);
-      setToken(data.token);
+      authStorage.detectCorrectToken(data.token).then(value => {
+        if (value == true) {
+          authStorage.storeToken(data.token);
+          setToken(data.token);
+        }
+      }).catch(err => console.log(err));
     });
 
     connectionHub.on('ReceiveRequest', data => {

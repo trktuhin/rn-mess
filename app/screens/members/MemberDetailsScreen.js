@@ -9,16 +9,85 @@ import routes from '../../navigation/routes';
 import globalVariables from '../../globalVariables';
 import memberApi from '../../api/member';
 import ActivityIndication from '../../components/ActivityIndicator';
+import useAuth from '../../auth/useAuth';
+import DefaultTextButton from '../../components/DefaultTextButton';
 
 function MemberDetailsScreen({ route, navigation }) {
     const [loading, setLoading] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isManager, setIsManager] = useState(false);
+    const [isManual, setIsManual] = useState(true);
+    const [ownMemberShip, setOwnMembership] = useState(false);
+    const { decodedToken } = useAuth();
+
     useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <IconButton name='pencil' bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER, { id: member.id })} />
-            ),
-        });
+        decodedToken().then(option => {
+            if (member.userId !== null) {
+                setIsManual(false);
+            }
+            if (option?.messRole == "admin") {
+                setIsAdmin(true);
+            }
+            // console.log("isAdmin", option?.messRole);
+            // console.log("member", member);
+            if (member.messRole == "manager") {
+                setIsManager(true);
+            }
+            if (option?.nameid == member?.userId) {
+                setOwnMembership(true);
+            }
+            if ((member?.userId == null && option?.messRole == "admin") || option?.nameid == member?.userId) {
+                navigation.setOptions({
+                    headerRight: () => (
+                        <IconButton name='pencil' bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER,
+                            {
+                                id: member.id,
+                                ownMembership: option?.nameid == member?.userId,
+                                isAdmin: option?.messRole == "admin",
+                                isManualMember: member?.userId == null
+                            })} />
+                    ),
+                });
+            }
+        }).catch(err => console.log(err));
+
     }, [navigation]);
+
+    const handleMakeManager = () => {
+        Alert.alert('Are you sure?', `${member.firstName} will have the power of a manager.`, [
+            { text: 'Cancel' },
+            {
+                text: 'Yes',
+                onPress: () => {
+                    setLoading(true);
+                    memberApi.makeManager(member.id).then((response) => {
+                        if (!response.ok) {
+                            return alert(response?.data ? response.data : 'Could not make manager');
+                        }
+                        navigation.pop();
+                    }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                }
+            }
+        ]);
+    }
+
+    const handleRemoveManagership = () => {
+        Alert.alert('Are you sure?', `${member.firstName} will be no longer a manager.`, [
+            { text: 'Cancel' },
+            {
+                text: 'Yes',
+                onPress: () => {
+                    setLoading(true);
+                    memberApi.deleteManagership(member.id).then((response) => {
+                        if (!response.ok) {
+                            return alert(response?.data ? response.data : 'Could not remove managership');
+                        }
+                        navigation.pop();
+                    }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                }
+            }
+        ]);
+    }
 
     const handleDelete = () => {
         Alert.alert('Are you sure?', `${member.firstName} will be deleted from your mess`,
@@ -26,13 +95,25 @@ function MemberDetailsScreen({ route, navigation }) {
                 { text: 'Cancel' },
                 {
                     text: 'Yes', onPress: () => {
-                        setLoading(true);
-                        var response = memberApi.deleteMember(member.id).then((response) => {
-                            if (!response.ok) {
-                                return alert(response?.data ? response.data : 'Could not delete member');
-                            }
-                            navigation.pop();
-                        }).catch((err) => console.log(err)).finally(() => setLoading(false))
+                        if (isManual) {
+                            setLoading(true);
+                            memberApi.deleteMember(member.id).then((response) => {
+                                if (!response.ok) {
+                                    return alert(response?.data ? response.data : 'Could not delete member');
+                                }
+                                navigation.pop();
+                            }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                        }
+                        else {
+                            setLoading(true);
+                            memberApi.deleteMembership(member.id).then((response) => {
+                                if (!response.ok) {
+                                    return alert(response?.data ? response.data : 'Could not delete member');
+                                }
+                                navigation.pop();
+                            }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                        }
+
                     }
                 }
             ]);
@@ -59,8 +140,10 @@ function MemberDetailsScreen({ route, navigation }) {
                 </View>
             </View>
             <View style={styles.bottomOptions}>
+                {(!isManual && isAdmin && !isManager && !ownMemberShip) && <DefaultTextButton title="Make Manager" onPress={handleMakeManager} bgColor="darkYellow" />}
+                {(isAdmin && isManager) && <DefaultTextButton title="Remove Managership" bgColor="danger" onPress={handleRemoveManagership} />}
                 <IconButton name="food" bgColor={colors.mediumGray} />
-                <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />
+                {(isAdmin && !ownMemberShip) && <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />}
             </View>
         </ScrollView>
     );
@@ -91,7 +174,8 @@ const styles = StyleSheet.create({
     },
     bottomOptions: {
         flexDirection: 'row',
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        alignItems: 'center'
     }
 });
 

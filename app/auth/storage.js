@@ -47,6 +47,18 @@ const getDecodedToken = async () => {
     return jwtDecode(token);
 }
 
+const detectCorrectToken = async (newToken) => {
+    const token = await getToken()
+    var existingId = jwtDecode(token).nameid;
+    var newUserId = jwtDecode(newToken).nameid;
+    if (existingId == newUserId) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 const removeToken = async () => {
     try {
         await SecureStore.deleteItemAsync(tokeyKey);
@@ -63,4 +75,4 @@ const removeUser = async () => {
     }
 }
 
-export default { getUser, getToken, storeToken, removeToken, removeUser, storeUser, getDecodedToken };
+export default { getUser, getToken, storeToken, removeToken, removeUser, storeUser, getDecodedToken, detectCorrectToken };
