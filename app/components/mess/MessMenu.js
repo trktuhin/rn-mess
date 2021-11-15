@@ -26,7 +26,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Sessions"
                 IconComponent={<Icon name="calendar-range" bgColor="#187fc9" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.SESSIONS) }} />
             <ListItem
                 style={styles.listItem}
                 title="Deposits"

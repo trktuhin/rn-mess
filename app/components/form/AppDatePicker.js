@@ -3,6 +3,8 @@ import { Button, View, StyleSheet, TouchableWithoutFeedback } from "react-native
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFormikContext } from 'formik';
+import dateFormat from "dateformat";
+
 import AppText from "../AppText";
 import DefaultStyles from '../../config/styles';
 import ErrorMessage from "./ErrorMessage";
@@ -50,11 +52,7 @@ function AppDatePicker({ name, label, initaialDate, mode = "date", width = '100%
     }
 
     const getMediumDate = (date) => {
-        let dateStr = date.toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        });
+        let dateStr = dateFormat(date, "dd mmmm yyyy");
         if (label) {
             dateStr += ` (${label})`
         }
@@ -70,7 +68,7 @@ function AppDatePicker({ name, label, initaialDate, mode = "date", width = '100%
                 </View>
             </TouchableWithoutFeedback>
             <DateTimePickerModal
-                date={selectedDate}
+                date={selectedDate ? selectedDate : new Date()}
                 isVisible={isDatePickerVisible}
                 mode={mode}
                 onConfirm={handleConfirm}

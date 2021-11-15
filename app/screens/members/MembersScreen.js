@@ -172,6 +172,7 @@ function MembersScreen({ navigation }) {
                     <FlatList data={members}
                         keyExtractor={member => member.id.toString()}
                         ItemSeparatorComponent={ListItemSeparator}
+                        showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => <ListItem
                             title={item.firstName + ' ' + item.lastName}
                             subtitle={item.mobile ? item.mobile : 'Manual'}
@@ -234,13 +235,15 @@ function MembersScreen({ navigation }) {
 }
 const styles = StyleSheet.create({
     container: {
-        padding: 15
+        padding: 15,
+        paddingBottom: 120
     },
     tabContainer: {
         flexDirection: 'row',
     },
     tabButtonContainer: {
-        flex: 1
+        flex: 1,
+        marginBottom: 5
     },
     centeredView: {
         flex: 1,

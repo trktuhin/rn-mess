@@ -26,7 +26,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 15,
         backgroundColor: colors.white,
-        alignItems: 'center'
+        alignItems: 'center',
+        borderTopEndRadius: 10,
+        borderBottomEndRadius: 10,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
+        marginBottom: 5,
     },
     detailContainer: {
         marginLeft: 10,
