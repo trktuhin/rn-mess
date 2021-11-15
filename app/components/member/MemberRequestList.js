@@ -5,17 +5,17 @@ import AppText from '../AppText';
 import DefaultTextButton from '../DefaultTextButton';
 import colors from '../../config/colors';
 
-function MemberRequestList({ name, image, onNewMember, onExistingMember, onDeleteMember, style }) {
+function MemberRequestList({ isAdmin = false, name, image, onNewMember, onExistingMember, onDeleteMember, style }) {
     return (
         <View style={[styles.requestContainer, style]}>
             {image && <Image style={styles.requestImage} source={image} />}
             <View style={styles.requestDetailContainer}>
                 <AppText style={styles.RequestMemberName}>{name}</AppText>
-                <View style={styles.requestButtonContainer}>
+                {isAdmin && <View style={styles.requestButtonContainer}>
                     <DefaultTextButton onPress={onExistingMember} bgColor="mediumGray" title="Existing" />
                     <DefaultTextButton onPress={onNewMember} title="New" />
                     <DefaultTextButton onPress={onDeleteMember} bgColor="danger" title="Delete" />
-                </View>
+                </View>}
             </View>
         </View>
     );

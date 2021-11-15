@@ -19,6 +19,7 @@ function MemberDetailsScreen({ route, navigation }) {
     const [isManual, setIsManual] = useState(true);
     const [ownMemberShip, setOwnMembership] = useState(false);
     const { decodedToken } = useAuth();
+    const member = route.params.member;
 
     useLayoutEffect(() => {
         decodedToken().then(option => {
@@ -42,8 +43,6 @@ function MemberDetailsScreen({ route, navigation }) {
                         <IconButton name='pencil' bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER,
                             {
                                 id: member.id,
-                                ownMembership: option?.nameid == member?.userId,
-                                isAdmin: option?.messRole == "admin",
                                 isManualMember: member?.userId == null
                             })} />
                     ),
@@ -95,31 +94,37 @@ function MemberDetailsScreen({ route, navigation }) {
                 { text: 'Cancel' },
                 {
                     text: 'Yes', onPress: () => {
-                        if (isManual) {
-                            setLoading(true);
-                            memberApi.deleteMember(member.id).then((response) => {
-                                if (!response.ok) {
-                                    return alert(response?.data ? response.data : 'Could not delete member');
-                                }
-                                navigation.pop();
-                            }).catch((err) => console.log(err)).finally(() => setLoading(false));
-                        }
-                        else {
-                            setLoading(true);
-                            memberApi.deleteMembership(member.id).then((response) => {
-                                if (!response.ok) {
-                                    return alert(response?.data ? response.data : 'Could not delete member');
-                                }
-                                navigation.pop();
-                            }).catch((err) => console.log(err)).finally(() => setLoading(false));
-                        }
+                        setLoading(true);
+                        memberApi.deleteMember(member.id).then((response) => {
+                            if (!response.ok) {
+                                return alert(response?.data ? response.data : 'Could not delete member');
+                            }
+                            navigation.pop();
+                        }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                    }
+                }
+            ]);
+    }
+
+    const handleRemoveMembership = () => {
+        Alert.alert('Are you sure?', `You will be removed from this mess.`,
+            [
+                { text: 'Cancel' },
+                {
+                    text: 'Yes', onPress: () => {
+                        setLoading(true);
+                        memberApi.deleteMembership(member.id).then((response) => {
+                            if (!response.ok) {
+                                return alert(response?.data ? response.data : 'Could not delete member');
+                            }
+                            navigation.pop();
+                        }).catch((err) => console.log(err)).finally(() => setLoading(false));
 
                     }
                 }
             ]);
     }
 
-    const member = route.params.member;
     return (
         <ScrollView>
             {loading && <ActivityIndication visible={loading} />}
@@ -142,6 +147,7 @@ function MemberDetailsScreen({ route, navigation }) {
             <View style={styles.bottomOptions}>
                 {(!isManual && isAdmin && !isManager && !ownMemberShip) && <DefaultTextButton title="Make Manager" onPress={handleMakeManager} bgColor="darkYellow" />}
                 {(isAdmin && isManager) && <DefaultTextButton title="Remove Managership" bgColor="danger" onPress={handleRemoveManagership} />}
+                {(!isAdmin && ownMemberShip) && <DefaultTextButton title="Remove Membership" bgColor="danger" onPress={handleRemoveMembership} />}
                 <IconButton name="food" bgColor={colors.mediumGray} />
                 {(isAdmin && !ownMemberShip) && <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />}
             </View>

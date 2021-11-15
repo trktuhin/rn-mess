@@ -60,6 +60,11 @@ const deleteManagership = (memberId) => {
     return client.get(endPoint);
 }
 
+const editMember = (model) => {
+    const endPoint = "/members/EditMember";
+    return client.post(endPoint, model);
+}
+
 export default {
     getMember,
     getMembers,
@@ -72,5 +77,6 @@ export default {
     replaceMember,
     deleteMembership,
     makeManager,
-    deleteManagership
+    deleteManagership,
+    editMember
 };

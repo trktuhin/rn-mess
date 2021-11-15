@@ -27,6 +27,7 @@ function MembersScreen({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [requestedMember, setrequestedMember] = useState(null);
     const [replacedMemberId, setreplacedMemberId] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const { decodedToken, token, recievedRequest, setRecievedRequest } = useAuth();
 
     useEffect(() => {
@@ -44,10 +45,12 @@ function MembersScreen({ navigation }) {
         decodedToken().then((option) => {
             setMessOption(option);
             if (option.messRole == "admin") {
+                setIsAdmin(true);
                 navigation.setOptions({
                     headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITMEMBER, { id: 0 })} />
                 });
             }
+            initializeMembers();
         }).catch((err) => console.log(err));
 
     }, [token]);
@@ -222,6 +225,7 @@ function MembersScreen({ navigation }) {
                             onDeleteMember={() => handleDeleteRequest(item.user.userId)}
                             onNewMember={() => handleAcceptNewMember(item.user.userId)}
                             onExistingMember={() => handleOpenModal(item.user)}
+                            isAdmin={isAdmin}
                         />} />
                 </View>
             )}

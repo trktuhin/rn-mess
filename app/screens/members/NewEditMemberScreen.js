@@ -7,6 +7,7 @@ import { AppForm, AppFormField } from '../../components/form';
 import IconButton from '../../components/IconButton';
 import colors from '../../config/colors';
 import memberApi from '../../api/member';
+import routes from '../../navigation/routes';
 
 const validationSchema = Yup.object().shape({
     firstName: Yup.string().required().min(1).label('First Name'),
@@ -22,6 +23,8 @@ function NewEditMemberScreen({ route, navigation }) {
     const [loading, setLoading] = useState(false);
     const [selectedMember, setselectedMember] = useState(null);
     const formRef = useRef();
+    const id = route.params?.id;
+    const isManual = route.params?.isManualMember;
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -33,8 +36,6 @@ function NewEditMemberScreen({ route, navigation }) {
             ),
         });
 
-        var id = route.params?.id;
-        //console.log(id);
         if (id !== 0) {
             setLoading(true);
             setMode("Edit");
@@ -43,9 +44,10 @@ function NewEditMemberScreen({ route, navigation }) {
             }).catch(err => console.log(err)).finally(() => setLoading(false));
         }
     }, [route, navigation]);
-    const handleSubmit = async (member) => {
-        setLoading(true);
+
+    const handleSubmit = (member) => {
         const model = {
+            id: id ? id : 0,
             firstName: member.firstName,
             lastName: member.lastName,
             dBreakfast: member.breakfast,
@@ -53,21 +55,31 @@ function NewEditMemberScreen({ route, navigation }) {
             dDinner: member.dinner
         };
         if (mode == "New") {
-            var response = await memberApi.addMember(model);
-            if (!response.ok) {
-                return alert('Could not add new member');
-            }
-            navigation.pop();
+            setLoading(true);
+            memberApi.addMember(model).then(res => {
+                navigation.pop();
+            }).catch((_) => {
+                return alert('Could not add new member.');
+            }).finally(() => setLoading(false));
         }
-        setLoading(false);
+        else {
+            setLoading(true);
+            memberApi.editMember(model).then(res => {
+                memberApi.getMember(id).then(response => {
+                    navigation.navigate(routes.MEMBERDETAILS, { member: response.data })
+                }).catch((_) => console.log('Could not fetch updated information.'))
+                    .finally(() => setLoading(false));
+            }).catch((_) => console.log('Failed to edit.'))
+        }
     }
+
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps='handled'
         >
             <View style={styles.container}>
                 {loading && <ActivityIndication visible={loading} />}
-                {(mode == "New" || (mode !== "New" && !loading)) && <AppForm
+                {(mode == "New" || (mode !== "New" && selectedMember != null)) && <AppForm
                     initialValues={{
                         firstName: selectedMember?.firstName ? selectedMember.firstName : '',
                         lastName: selectedMember?.lastName ? selectedMember.lastName : '',
@@ -79,8 +91,8 @@ function NewEditMemberScreen({ route, navigation }) {
                     validationSchema={validationSchema}
                     formRef={formRef}
                 >
-                    <AppFormField icon="account" name="firstName" maxLength={255} placeholder="First Name" />
-                    <AppFormField icon="account" name="lastName" maxLength={255} placeholder="Last Name" />
+                    <AppFormField editable={isManual} icon="account" name="firstName" maxLength={255} placeholder="First Name" />
+                    <AppFormField editable={isManual} icon="account" name="lastName" maxLength={255} placeholder="Last Name" />
                     <AppFormField icon="food-fork-drink" width={150} name="breakfast" maxLength={8} keyboardType="numeric" placeholder="Breakfast" />
                     <AppFormField icon="food" width={150} name="lunch" maxLength={8} keyboardType="numeric" placeholder="Lunch" />
                     <AppFormField icon="silverware-fork-knife" width={150} name="dinner" maxLength={8} keyboardType="numeric" placeholder="Dinner" />
