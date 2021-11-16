@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TouchableWithoutFeedback } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFormikContext } from 'formik';
 import dateFormat from "dateformat";
 
-import AppText from "../AppText";
-import DefaultStyles from '../../config/styles';
-import ErrorMessage from "./ErrorMessage";
-import colors from "../../config/colors";
+import AppText from "./AppText";
+import DefaultStyles from '../config/styles';
+import colors from "../config/colors";
 
-function AppDatePicker({ name, enabled = true, label, initaialDate, mode = "date", width = '100%', placeholder = 'Select a date' }) {
+function CustomDatePicker({ enabled = true, label, initaialDate, mode = "date", width = '100%', placeholder = 'Select a date', onChange }) {
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [labelText, setLabelText] = useState(placeholder);
     const [selectedDate, setselectedDate] = useState(initaialDate);
-    const { setFieldTouched, setFieldValue, errors, touched } = useFormikContext();
-
     useEffect(() => {
         if (initaialDate) {
             setLabelText(mode == "date" ? getMediumDate(initaialDate) : get12HourTime(initaialDate));
@@ -34,9 +30,8 @@ function AppDatePicker({ name, enabled = true, label, initaialDate, mode = "date
     const handleConfirm = (date) => {
         setDatePickerVisibility(false);
         setLabelText(mode == "date" ? getMediumDate(date) : get12HourTime(date));
-        setFieldTouched(name);
-        setFieldValue(name, date);
         setselectedDate(date);
+        onChange(date);
     }
 
     const get12HourTime = (date) => {
@@ -54,7 +49,7 @@ function AppDatePicker({ name, enabled = true, label, initaialDate, mode = "date
     }
 
     const getMediumDate = (date) => {
-        let dateStr = dateFormat(date, "dd mmmm yyyy");
+        let dateStr = dateFormat(date, "dd mmm yyyy");
         if (label) {
             dateStr += ` (${label})`
         }
@@ -76,7 +71,6 @@ function AppDatePicker({ name, enabled = true, label, initaialDate, mode = "date
                 onConfirm={handleConfirm}
                 onCancel={hideDatePicker}
             />
-            <ErrorMessage error={errors[name]} visible={touched[name]} />
         </View>
     );
 }
@@ -84,10 +78,10 @@ function AppDatePicker({ name, enabled = true, label, initaialDate, mode = "date
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        padding: 15,
-        borderRadius: 25,
+        padding: 9,
+        borderRadius: 15,
         backgroundColor: DefaultStyles.colors.white,
-        marginVertical: 10,
+        marginBottom: 10,
         alignItems: 'center'
     },
     icon: {
@@ -98,4 +92,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default AppDatePicker;
+export default CustomDatePicker;

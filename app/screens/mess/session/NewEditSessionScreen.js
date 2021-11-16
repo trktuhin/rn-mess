@@ -39,6 +39,9 @@ function NewEditSessionScreen({ route, navigation }) {
                     ),
                 });
             }
+            else {
+                navigation.setOptions({ title: "Session Details" });
+            }
         }).catch(err => console.log(err));
     }, [route, navigation]);
 
@@ -99,9 +102,9 @@ function NewEditSessionScreen({ route, navigation }) {
                     validationSchema={validationSchema}
                     formRef={formRef}
                 >
-                    <AppFormField icon="calendar-account" name="title" maxLength={255} placeholder="Session Title" />
-                    <AppDatePicker label="Session Start" initaialDate={selectedSession?.sessionStart ? new Date(selectedSession.sessionStart) : null} name="sessionStart" mode="date" placeholder="Session Start" />
-                    <AppDatePicker label="Session End" initaialDate={selectedSession?.sessionEnd ? new Date(selectedSession.sessionEnd) : null} name="sessionEnd" mode="date" placeholder="Session End" />
+                    <AppFormField editable={isAdmin} icon="calendar-account" name="title" maxLength={255} placeholder="Session Title" />
+                    <AppDatePicker enabled={isAdmin} label="Session Start" initaialDate={selectedSession?.sessionStart ? new Date(selectedSession.sessionStart) : null} name="sessionStart" mode="date" placeholder="Session Start" />
+                    <AppDatePicker enabled={isAdmin} label="Session End" initaialDate={selectedSession?.sessionEnd ? new Date(selectedSession.sessionEnd) : null} name="sessionEnd" mode="date" placeholder="Session End" />
                 </AppForm>}
                 <View style={styles.bottomOptions}>
                     {(isAdmin && selectedSession) && <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />}

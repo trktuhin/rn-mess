@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Image, ScrollView } from 'react-native';
 import * as Yup from 'yup';
+import * as SecureStore from 'expo-secure-store';
 
 import AppText from '../../components/AppText';
 import Screen from '../../components/Screen';
@@ -18,14 +19,33 @@ const validationSchema = Yup.object().shape({
 
 function LoginScreen({ navigation }) {
     const [loginFailed, setLoginFailed] = useState(false);
+    const [lastMobile, setLastMobile] = useState(null);
     const [loading, setLoading] = useState(false);
     const auth = useAuth();
+
+    useEffect(() => {
+        SecureStore.getItemAsync('lastLoggedInMobile').then(data => {
+            if (data) {
+                setLastMobile(data);
+            }
+            else {
+                setLastMobile("01");
+            }
+        }).catch(err => {
+            setLastMobile("01");
+        });
+    }, []);
 
     const handleSubmit = async ({ mobile, password }) => {
         setLoading(true);
         const response = await authApi.login('+88' + mobile, password);
         if (response.status != null) setLoading(false);
         if (!response.ok) return setLoginFailed(true);
+        try {
+            await SecureStore.setItemAsync('lastLoggedInMobile', mobile);
+        } catch (error) {
+            console.log('Error storing last logged in mobile', error);
+        }
         setLoginFailed(false);
         auth.login(response.data);
         const user = await authStorage.getUser();
@@ -42,9 +62,9 @@ function LoginScreen({ navigation }) {
             <Screen style={styles.container}>
                 <Image resizeMode="contain" style={styles.logo} source={require("../../assets/messlogo.jpg")} />
                 <ErrorMessage error="Invalid mobile and/or password." visible={loginFailed} />
-                <AppForm
+                {lastMobile && <AppForm
                     initialValues={{
-                        mobile: '',
+                        mobile: lastMobile,
                         password: ''
                     }}
                     onSubmit={handleSubmit}
@@ -68,7 +88,7 @@ function LoginScreen({ navigation }) {
                         textContentType="password"
                     />
                     <SumbitButton title="Sign In" />
-                </AppForm>
+                </AppForm>}
 
                 <AppText style={styles.navText}>Don't have account? <AppText style={styles.link} onPress={() => navigation.replace(routes.REGISTER)}>Sign up</AppText></AppText>
             </Screen>

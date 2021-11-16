@@ -11,6 +11,8 @@ export default Object.freeze({
     UPDATE_MESS: "UpdateMess",
     SESSIONS: "Sessions",
     NEWEDITSESSION: "NewEditSession",
+    DAILYEXPENSES: "DailyExpenses",
+    NEWEDITDAILYEXPENSE: "NewEditDailyExpense",
     PROFILE: "Profile",
     EDITPROFILE: "EditProfile",
     CHANGE_PASSWORD: "ChangePassword"

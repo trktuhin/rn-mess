@@ -8,6 +8,7 @@ import messApi from '../../api/mess';
 import ActivityIndication from '../../components/ActivityIndicator';
 import IconButton from '../../components/IconButton';
 import colors from '../../config/colors';
+import ListItem from '../../components/list/ListItem';
 
 const messFormValidationSchema = Yup.object().shape({
     messName: Yup.string().required().min(1).label('Mess Name'),
@@ -24,7 +25,9 @@ function UpdateMessScreen({ navigation }) {
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             messApi.getMess().then(response => {
-                setMessData(response.data);
+                if (response?.data !== "You don't own a mess") {
+                    setMessData(response.data);
+                }
             }).catch(error => console.log(error)).finally(() => setLoading(false));
         });
         return unsubscribe;
@@ -72,8 +75,6 @@ function UpdateMessScreen({ navigation }) {
                         }
                         navigation.pop();
                     }).catch((err) => console.log(err)).finally(() => setLoading(false))
-
-
                 }
             }
         ]);
@@ -106,6 +107,13 @@ function UpdateMessScreen({ navigation }) {
                 <View style={styles.trashContainer}>
                     <IconButton onPress={deleteMess} name="trash-can" bgColor={colors.mediumGray} size={50} />
                 </View>
+            </View>}
+            {(!messData && !loading) && <View>
+                <ListItem
+                    title="Sorry!"
+                    subtitle="This menu is only for Admin"
+                    onPress={() => navigation.pop()}
+                />
             </View>}
         </ScrollView>
     );

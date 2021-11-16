@@ -15,7 +15,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Daily Expense"
                 IconComponent={<Icon name="view-list" bgColor="#7018c9" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.DAILYEXPENSES) }} />
             <ListItem
                 style={styles.listItem}
                 title="Fixed Expense"
