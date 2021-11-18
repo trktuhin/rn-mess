@@ -29,8 +29,6 @@ function MemberDetailsScreen({ route, navigation }) {
             if (option?.messRole == "admin") {
                 setIsAdmin(true);
             }
-            // console.log("isAdmin", option?.messRole);
-            // console.log("member", member);
             if (member.messRole == "manager") {
                 setIsManager(true);
             }

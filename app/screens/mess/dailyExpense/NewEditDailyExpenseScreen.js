@@ -23,11 +23,13 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
     const [totalExpense, setTotalExpense] = useState(route.params?.totalExpense ? route.params.totalExpense.toString() : "0");
     const [selectedResponsibleMember, setSelectedResponsibleMember] = useState(route.params?.responsibleMember ? route.params.responsibleMember : null);
     const [members, setMembers] = useState([]);
+    const [memberMealResource, setMemberMealResource] = useState([]);
     const { decodedToken } = useAuth();
     const id = route.params?.id;
     const mode = id === 0 ? "New" : "Edit";
 
     useEffect(() => {
+        let isCancelled = false;
         LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
         memberApi.getMembers().then(res => {
             setMembers(res?.data);
@@ -53,13 +55,18 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
         }).catch(err => console.log(err));
 
         if (id > 0) {
+            setLoading(true);
             expenseApi.getSignleExpense(id).then(res => {
                 if (res.ok) {
-                    const sExpense = res.data.expense;
-                    setSingleExpense(sExpense);
+                    setSingleExpense(res.data.expense);
+                    setMemberMealResource(res.data.memberMeals);
                 }
-            }).catch(err => console.log(err));
+            }).catch(err => console.log(err))
+                .finally(() => setLoading(false));
         }
+        return () => {
+            isCancelled = true;
+        };
     }, [route, navigation]);
 
     const handleDelete = () => {
@@ -102,7 +109,20 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
             expenseApi.addDailyExpense(model).then(res => {
                 if (!res.ok) {
                     setLoading(false);
-                    return alert(res.data ? res.data : 'Could not add new expnese');
+                    return alert(res.data ? res.data : 'Could not add new daily expnese');
+                }
+                navigation.pop();
+            }).catch(err => console.log(err))
+                .finally(() => setLoading(false));
+        } else {
+            const model = {
+                dailyExpense: { ...singleExpense, expense: totalExpense, responsibleMember: selectedResponsibleMember },
+                memberMealResources: memberMealResource
+            };
+            expenseApi.editDailyExpense(model).then(res => {
+                if (!res.ok) {
+                    setLoading(false);
+                    return alert(res.data ? res.data : 'Could not edit daily expnese');
                 }
                 navigation.pop();
             }).catch(err => console.log(err))
@@ -117,24 +137,39 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
         setMembers(newMembers);
     }
 
+    const handleOnChangeMealEdit = (updatedMember, index) => {
+        let newMembers = [...memberMealResource];
+        newMembers[index] = updatedMember;
+        setMemberMealResource(newMembers);
+    }
+
     const getTotalMealsCount = () => {
         let sum = 0;
-        members.forEach(element => {
-            sum += +element.dBreakfast;
-            sum += +element.dLunch;
-            sum += +element.dDinner;
-        });
+        if (mode === "New") {
+            members.forEach(element => {
+                sum += +element.dBreakfast;
+                sum += +element.dLunch;
+                sum += +element.dDinner;
+            });
+        } else {
+            memberMealResource.forEach(element => {
+                sum += +element.breakfast;
+                sum += +element.lunch;
+                sum += +element.dinner;
+            });
+        }
+
         return sum;
     }
 
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {members?.length > 0 && <View style={styles.container}>
+            {(mode === "New" || singleExpense !== null) && members?.length > 0 && <View style={styles.container}>
                 <View style={styles.topBarContainer}>
-                    {(mode === "New" || singleExpense !== null) && <View style={styles.topBarDetail}>
+                    <View style={styles.topBarDetail}>
                         <AppText style={styles.label}>Date</AppText>
-                        <CustomDatePicker initaialDate={expenseDate} mode="date" onChange={(date) => {
+                        <CustomDatePicker enabled={mode === "New" ? true : false} initaialDate={expenseDate} mode="date" onChange={(date) => {
                             setExpenseDate(date);
                         }} />
                         <View style={styles.pickerStyle}>
@@ -152,14 +187,15 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
                                     }
                                 })
                                 }
+                                disabled={!isManager}
                                 value={selectedResponsibleMember ? selectedResponsibleMember : null}
                                 style={pickerSelectStyles}
                             />
                         </View>
-                    </View>}
+                    </View>
                     <View style={styles.topBarDetail}>
                         <AppText style={styles.label}>Expense</AppText>
-                        <CustomTextInput prefix="৳" value={totalExpense} keyboardType="numeric" onChangeText={(value) => {
+                        <CustomTextInput prefix="৳" editable={isManager} value={totalExpense} keyboardType="numeric" onChangeText={(value) => {
                             setTotalExpense(value);
                         }} />
                         <View style={styles.totalMealLabel}>
@@ -169,7 +205,7 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
                 </View>
                 <ScrollView showsVerticalScrollIndicator={false}>
                     <View style={styles.flatListContainer}>
-                        {members.length > 0 &&
+                        {(members.length > 0 && mode === "New") &&
                             <FlatList
                                 data={members}
                                 keyExtractor={member => member.id.toString()}
@@ -182,8 +218,23 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
                                 />}
                             />
                         }
+                        {(memberMealResource.length > 0 && mode !== "New") &&
+                            <FlatList
+                                data={memberMealResource}
+                                keyExtractor={member => member.memberId.toString()}
+                                ItemSeparatorComponent={ListItemSeparator}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item, index }) => <DailyExpenseForm
+                                    member={item}
+                                    index={index}
+                                    onChange={handleOnChangeMealEdit}
+                                    mode="Edit"
+                                    isManager={isManager}
+                                />}
+                            />
+                        }
                     </View>
-                    {isManager && <AppButton title="Submit" onPress={handleSubmit} />}
+                    {((mode === "New" && members.length > 0) || memberMealResource.length > 0) && isManager && <AppButton title="Submit" onPress={handleSubmit} />}
                 </ScrollView>
             </View>}
         </>

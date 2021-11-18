@@ -12,11 +12,15 @@ function SuccessfulScreen({ navigation }) {
     const { logout } = useAuth();
 
     useEffect(() => {
+        let isCancelled = false;
         Animated.timing(animSize, {
             toValue: 0,
             duration: 1000,
             useNativeDriver: false
         }).start();
+        return () => {
+            isCancelled = true;
+        };
     }, []);
 
     const goToLoginPage = () => {

@@ -17,7 +17,7 @@ function DailyExpensesScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [sessions, setSessions] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState(0);
+    const [selectedSessionId, setSelectedSessionId] = useState(null);
     const { decodedToken } = useAuth();
 
     useEffect(() => {
@@ -32,16 +32,32 @@ function DailyExpensesScreen({ navigation }) {
             sessionApi.getSessions().then(res => {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
-                    setSelectedSessionId(res.data[0].id);
+                    const initialSessionId = res.data[0].id;
+                    setSelectedSessionId(initialSessionId);
+                    dailyExpenseApi.getDailyExpenses(initialSessionId).then(response => {
+                        setDailyExpenses(response?.data);
+                    }).catch((_) => console.log('Could not get daily expenses'))
+                        .finally(() => setLoading(false));
                 }
-                dailyExpenseApi.getDailyExpenses(selectedSessionId).then(response => {
-                    setDailyExpenses(response?.data);
-                }).catch((_) => console.log('Could not get daily expenses'))
-                    .finally(() => setLoading(false));
+                else {
+                    setSelectedSessionId(0);
+                    dailyExpenseApi.getDailyExpenses(0).then(response => {
+                        setDailyExpenses(response?.data);
+                    }).catch((_) => console.log('Could not get daily expenses'))
+                        .finally(() => setLoading(false));
+                }
             }).catch(err => console.log(err));
         });
         return unsubscribe;
     }, [navigation]);
+
+    const fetchDailyExpenses = (sessionId) => {
+        setLoading(true);
+        dailyExpenseApi.getDailyExpenses(sessionId).then(response => {
+            setDailyExpenses(response?.data);
+        }).catch((_) => console.log('Could not get daily expenses'))
+            .finally(() => setLoading(false));
+    }
 
     const geMealRate = () => {
         let totalExpense = 0;
@@ -55,16 +71,17 @@ function DailyExpensesScreen({ navigation }) {
         }
         return 0;
     }
-
-
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            <View style={styles.container}>
+            {selectedSessionId && <View style={styles.container}>
                 <View style={styles.topBarContainer}>
                     <View style={styles.pickerStyle}>
                         <RNPickerSelect
-                            onValueChange={(value) => setSelectedSessionId(value)}
+                            onValueChange={(value) => {
+                                setSelectedSessionId(value);
+                                fetchDailyExpenses(value);
+                            }}
                             placeholder={{
                                 label: 'Select Session',
                                 value: 0,
@@ -107,7 +124,11 @@ function DailyExpensesScreen({ navigation }) {
                         />}
                     />
                 </View>}
-            </View>
+                {dailyExpenses.length === 0 &&
+                    <View style={styles.NoDataContainer}>
+                        <AppText>No data found for this session</AppText>
+                    </View>}
+            </View>}
         </>
     );
 }
@@ -131,6 +152,12 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 10,
         alignItems: 'flex-end'
+    },
+    NoDataContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        paddingBottom: 150
     }
 });
 

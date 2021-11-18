@@ -26,6 +26,7 @@ function NewEditMemberScreen({ route, navigation }) {
     const id = route.params?.id;
     const isManual = route.params?.isManualMember;
     useEffect(() => {
+        let isCancelled = false;
         navigation.setOptions({
             headerRight: () => (
                 <IconButton name='check' bgColor={colors.primary} onPress={() => {
@@ -43,6 +44,9 @@ function NewEditMemberScreen({ route, navigation }) {
                 setselectedMember(response.data);
             }).catch(err => console.log(err)).finally(() => setLoading(false));
         }
+        return () => {
+            isCancelled = true;
+        };
     }, [route, navigation]);
 
     const handleSubmit = (member) => {

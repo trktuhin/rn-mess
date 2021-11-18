@@ -13,8 +13,12 @@ function MessScreen({ route, navigation }) {
     const { decodedToken, token } = useAuth();
 
     useEffect(() => {
+        let isCancelled = false;
         intializeMessOption();
         setLoading(false);
+        return () => {
+            isCancelled = true;
+        };
     }, [token]);
 
     const intializeMessOption = async () => {

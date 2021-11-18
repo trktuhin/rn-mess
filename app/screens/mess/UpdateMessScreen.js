@@ -32,6 +32,7 @@ function UpdateMessScreen({ navigation }) {
         });
         return unsubscribe;
     }, [navigation]);
+
     const handleSubmitMessForm = async (messFormData, { resetForm }) => {
         setLoading(true);
         const model = {

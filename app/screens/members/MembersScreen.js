@@ -19,7 +19,7 @@ import DefaultTextButton from '../../components/DefaultTextButton';
 
 
 function MembersScreen({ navigation }) {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [messOption, setMessOption] = useState();
     const [members, setMembers] = useState([]);
     const [memberRequests, setmemberRequests] = useState([]);
@@ -31,17 +31,21 @@ function MembersScreen({ navigation }) {
     const { decodedToken, token, recievedRequest, setRecievedRequest } = useAuth();
 
     useEffect(() => {
+        let isCancelled = false;
         if (recievedRequest == false) {
             return;
         }
-        // console.log('member request signal r invoked');
         initializeMemberRequests();
         if (recievedRequest == true) {
             setRecievedRequest(false);
         }
+        return () => {
+            isCancelled = true;
+        };
     }, [recievedRequest]);
 
     useEffect(() => {
+        let isCancelled = false;
         decodedToken().then((option) => {
             setMessOption(option);
             if (option.messRole == "admin") {
@@ -52,13 +56,14 @@ function MembersScreen({ navigation }) {
             }
             initializeMembers();
         }).catch((err) => console.log(err));
-
+        return () => {
+            isCancelled = true;
+        };
     }, [token]);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             initializeMembers();
-            setLoading(false);
         });
         return unsubscribe;
     }, [navigation]);
@@ -66,20 +71,23 @@ function MembersScreen({ navigation }) {
 
 
     const initializeMembers = async () => {
+        setLoading(true);
         const response = await memberApi.getMembers();
         if (!response.ok) {
             return alert('Could not fetch members');
         }
         setMembers(response.data);
+        setLoading(false);
     }
 
     const initializeMemberRequests = async () => {
+        setLoading(true);
         const response = await memberApi.getMemberRequests();
         if (!response.ok) {
             return alert('Could not fetch member requests');
         }
         setmemberRequests(response.data);
-        // console.log("requests", response.data);
+        setLoading(false);
     }
 
     const isMemberTab = (value) => {
@@ -153,84 +161,91 @@ function MembersScreen({ navigation }) {
     }
 
     return (
-        <View style={styles.container}>
-            {messOption && (parseInt(messOption.MessId) === 0) &&
-                (<View>
-                    <AppButton title="Create or Join Mess" onPress={() => navigation.navigate(routes.MESS)} />
-                </View>)}
-            {loading && <ActivityIndication visible={loading} />}
-            {messOption?.MessId > 0 && <View style={styles.tabContainer}>
-                <View style={styles.tabButtonContainer}>
-                    <TabButton onPress={() => isMemberTab(true)} isActive={memberTab} title="Active Members" />
-                </View>
-                <View style={styles.tabButtonContainer}>
-                    <TabButton onPress={() => isMemberTab(false)} isActive={!memberTab} title="Member Requests" />
-                </View>
-            </View>}
-            {memberTab && members.length > 0 && (
-                <View>
-                    <FlatList data={members}
-                        keyExtractor={member => member.id.toString()}
-                        ItemSeparatorComponent={ListItemSeparator}
-                        showsVerticalScrollIndicator={false}
-                        renderItem={({ item }) => <ListItem
-                            title={item.firstName + ' ' + item.lastName}
-                            subtitle={item.mobile ? item.mobile : 'Manual'}
-                            image={item.photoName ? { uri: globalVariables.IMAGE_BASE + item.photoName } : require("../../assets/defaultuser.jpg")}
-                            onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
-                </View>
-            )}
-            {!memberTab && memberRequests.length > 0 && (
-                <View>
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={modalVisible}
-                        onRequestClose={() => {
-                            setModalVisible(!modalVisible);
-                        }}
-                    >
-                        <View style={styles.centeredView}>
-                            <View style={styles.modalView}>
-                                <AppText style={styles.hintModal}>{`${requestedMember?.firstName} ${requestedMember?.lastName}`} will replace the member you select.</AppText>
-                                <RNPickerSelect
-                                    onValueChange={(value) => setreplacedMemberId(value)}
-                                    placeholder={{
-                                        label: 'Select a member',
-                                        value: null,
-                                        color: colors.primary,
-                                    }}
-                                    items={members.map((member) => {
-                                        return {
-                                            label: `${member.firstName} ${member.lastName}`,
-                                            value: `${member.id}`
+        <>{loading && <ActivityIndication visible={loading} />}
+            <View style={styles.container}>
+                {messOption && (parseInt(messOption.MessId) === 0) &&
+                    (<View>
+                        <AppButton title="Create or Join Mess" onPress={() => navigation.navigate(routes.MESS)} />
+                    </View>)}
+
+                {messOption?.MessId > 0 && <View style={styles.tabContainer}>
+                    <View style={styles.tabButtonContainer}>
+                        <TabButton onPress={() => isMemberTab(true)} isActive={memberTab} title="Active Members" />
+                    </View>
+                    <View style={styles.tabButtonContainer}>
+                        <TabButton onPress={() => isMemberTab(false)} isActive={!memberTab} title="Member Requests" />
+                    </View>
+                </View>}
+                {memberTab && members.length > 0 && (
+                    <View>
+                        <FlatList data={members}
+                            keyExtractor={member => member.id.toString()}
+                            ItemSeparatorComponent={ListItemSeparator}
+                            showsVerticalScrollIndicator={false}
+                            renderItem={({ item }) => <ListItem
+                                title={item.firstName + ' ' + item.lastName}
+                                subtitle={item.mobile ? item.mobile : 'Manual'}
+                                image={item.photoName ? { uri: globalVariables.IMAGE_BASE + item.photoName } : require("../../assets/defaultuser.jpg")}
+                                onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
+                    </View>
+                )}
+                {!memberTab && memberRequests.length === 0 &&
+                    <View style={styles.NoDataContainer}>
+                        <AppText>No member requests found</AppText>
+                    </View>
+                }
+                {!memberTab && memberRequests.length > 0 && (
+                    <View>
+                        <Modal
+                            animationType="slide"
+                            transparent={true}
+                            visible={modalVisible}
+                            onRequestClose={() => {
+                                setModalVisible(!modalVisible);
+                            }}
+                        >
+                            <View style={styles.centeredView}>
+                                <View style={styles.modalView}>
+                                    <AppText style={styles.hintModal}>{`${requestedMember?.firstName} ${requestedMember?.lastName}`} will replace the member you select.</AppText>
+                                    <RNPickerSelect
+                                        onValueChange={(value) => setreplacedMemberId(value)}
+                                        placeholder={{
+                                            label: 'Select a member',
+                                            value: null,
+                                            color: colors.primary,
+                                        }}
+                                        items={members.map((member) => {
+                                            return {
+                                                label: `${member.firstName} ${member.lastName}`,
+                                                value: `${member.id}`
+                                            }
+                                        })
                                         }
-                                    })
-                                    }
-                                    style={pickerSelectStyles}
-                                />
-                                <View style={styles.modalFooterButton}>
-                                    <DefaultTextButton title="Close" bgColor="mediumGray" onPress={() => setModalVisible(false)} />
-                                    <DefaultTextButton title="Replace Member" bgColor="primary" onPress={() => handleReplaceMember()} />
+                                        style={pickerSelectStyles}
+                                    />
+                                    <View style={styles.modalFooterButton}>
+                                        <DefaultTextButton title="Close" bgColor="mediumGray" onPress={() => setModalVisible(false)} />
+                                        <DefaultTextButton title="Replace Member" bgColor="primary" onPress={() => handleReplaceMember()} />
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                    </Modal>
+                        </Modal>
 
-                    <FlatList data={memberRequests}
-                        keyExtractor={mr => mr.id.toString()}
-                        ItemSeparatorComponent={ListItemSeparator}
-                        renderItem={({ item }) => <MemberRequestList
-                            name={`${item.user.firstName} ${item.user.lastName}`}
-                            image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
-                            onDeleteMember={() => handleDeleteRequest(item.user.userId)}
-                            onNewMember={() => handleAcceptNewMember(item.user.userId)}
-                            onExistingMember={() => handleOpenModal(item.user)}
-                            isAdmin={isAdmin}
-                        />} />
-                </View>
-            )}
-        </View>
+                        <FlatList data={memberRequests}
+                            keyExtractor={mr => mr.id.toString()}
+                            ItemSeparatorComponent={ListItemSeparator}
+                            renderItem={({ item }) => <MemberRequestList
+                                name={`${item.user.firstName} ${item.user.lastName}`}
+                                image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
+                                onDeleteMember={() => handleDeleteRequest(item.user.userId)}
+                                onNewMember={() => handleAcceptNewMember(item.user.userId)}
+                                onExistingMember={() => handleOpenModal(item.user)}
+                                isAdmin={isAdmin}
+                            />} />
+                    </View>
+                )}
+            </View>
+        </>
     );
 }
 const styles = StyleSheet.create({
@@ -285,8 +300,13 @@ const styles = StyleSheet.create({
     hintModal: {
         marginVertical: 10,
         color: colors.mediumGray,
+    },
+    NoDataContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        paddingBottom: 150,
     }
-
 });
 
 const pickerSelectStyles = StyleSheet.create({

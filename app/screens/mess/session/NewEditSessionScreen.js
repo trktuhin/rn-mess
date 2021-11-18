@@ -26,6 +26,7 @@ function NewEditSessionScreen({ route, navigation }) {
     const mode = id === 0 ? "New" : "Edit";
 
     useEffect(() => {
+        let isCancelled = false;
         decodedToken().then(option => {
             if (option?.messRole == "admin") {
                 setIsAdmin(true);
@@ -43,6 +44,9 @@ function NewEditSessionScreen({ route, navigation }) {
                 navigation.setOptions({ title: "Session Details" });
             }
         }).catch(err => console.log(err));
+        return () => {
+            isCancelled = true;
+        };
     }, [route, navigation]);
 
     const handleSubmit = (session) => {

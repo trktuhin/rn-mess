@@ -24,6 +24,7 @@ function LoginScreen({ navigation }) {
     const auth = useAuth();
 
     useEffect(() => {
+        let isCancelled = false;
         SecureStore.getItemAsync('lastLoggedInMobile').then(data => {
             if (data) {
                 setLastMobile(data);
@@ -34,6 +35,9 @@ function LoginScreen({ navigation }) {
         }).catch(err => {
             setLastMobile("01");
         });
+        return () => {
+            isCancelled = true;
+        };
     }, []);
 
     const handleSubmit = async ({ mobile, password }) => {
