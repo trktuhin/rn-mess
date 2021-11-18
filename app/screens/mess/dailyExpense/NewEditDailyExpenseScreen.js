@@ -1,10 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, FlatList, Image } from 'react-native';
-import * as Yup from 'yup';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert, FlatList, LogBox } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 
 import ActivityIndication from '../../../components/ActivityIndicator';
-import { AppForm, AppFormField } from '../../../components/form';
 import IconButton from '../../../components/IconButton';
 import colors from '../../../config/colors';
 import useAuth from '../../../auth/useAuth';
@@ -12,90 +10,192 @@ import AppText from '../../../components/AppText';
 import CustomDatePicker from '../../../components/CustomDatePicker';
 import CustomTextInput from '../../../components/CustomTextInput';
 import memberApi from '../../../api/member';
+import expenseApi from '../../../api/dailyExpense';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
+import DailyExpenseForm from '../../../components/expense/DailyExpenseForm';
+import AppButton from '../../../components/AppButton';
 
-function NewEditDailyExpenseScreen(props) {
-    const [expenseDate, setExpenseDate] = useState();
-    const [totalExpense, setTotalExpense] = useState("");
-    const [selectedResponsibleMemberId, setSelectedResponsibleMemberId] = useState(0);
+function NewEditDailyExpenseScreen({ route, navigation }) {
+    const [expenseDate, setExpenseDate] = useState(route.params?.day ? new Date(route.params.day) : new Date());
+    const [isManager, setIsManager] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [singleExpense, setSingleExpense] = useState(null);
+    const [totalExpense, setTotalExpense] = useState(route.params?.totalExpense ? route.params.totalExpense.toString() : "0");
+    const [selectedResponsibleMember, setSelectedResponsibleMember] = useState(route.params?.responsibleMember ? route.params.responsibleMember : null);
     const [members, setMembers] = useState([]);
+    const { decodedToken } = useAuth();
+    const id = route.params?.id;
+    const mode = id === 0 ? "New" : "Edit";
 
     useEffect(() => {
+        LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
         memberApi.getMembers().then(res => {
-            console.log('members', res?.data);
             setMembers(res?.data);
+        }).catch(err => console.log(err))
+            .finally(() => setLoading(false));
+
+        decodedToken().then(option => {
+            if (option?.messRole == "admin" || option?.messRole == "manager") {
+                setIsManager(true);
+                if (id > 0) {
+                    navigation.setOptions({
+                        headerRight: () => (
+                            <IconButton name='trash-can' bgColor={colors.danger} onPress={handleDelete} />
+                        ),
+                    });
+                }
+            }
+            else {
+                if (id > 0) {
+                    navigation.setOptions({ title: "Daily Expense Details" });
+                }
+            }
         }).catch(err => console.log(err));
-    }, []);
+
+        if (id > 0) {
+            expenseApi.getSignleExpense(id).then(res => {
+                if (res.ok) {
+                    const sExpense = res.data.expense;
+                    setSingleExpense(sExpense);
+                }
+            }).catch(err => console.log(err));
+        }
+    }, [route, navigation]);
+
+    const handleDelete = () => {
+        Alert.alert('Are you sure?', `This daily expense will be deleted permanently.`,
+            [
+                { text: 'Cancel' },
+                {
+                    text: 'Yes', onPress: () => {
+                        setLoading(true);
+                        expenseApi.deleteDailyExpense(id).then((response) => {
+                            if (!response.ok) {
+                                return alert(response?.data ? response.data : 'Could not delete daily expense');
+                            }
+                            navigation.pop();
+                        }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                    }
+                }
+            ]);
+    }
+
+    const handleSubmit = () => {
+        if (!expenseDate) {
+            return alert('No date chosen');
+        }
+        if (isNaN(totalExpense)) {
+            setTotalExpense('0');
+            return alert('Total expense should be a number');
+        }
+        if (!selectedResponsibleMember) {
+            return alert('Select a responsible member');
+        }
+        if (mode === "New") {
+            setLoading(true);
+            const model = {
+                responsibleMember: selectedResponsibleMember,
+                expense: +totalExpense,
+                day: expenseDate,
+                members: members
+            };
+            expenseApi.addDailyExpense(model).then(res => {
+                if (!res.ok) {
+                    setLoading(false);
+                    return alert(res.data ? res.data : 'Could not add new expnese');
+                }
+                navigation.pop();
+            }).catch(err => console.log(err))
+                .finally(() => setLoading(false));
+        }
+
+    }
+
+    const handleOnChangeMeal = (updatedMember, index) => {
+        let newMembers = [...members];
+        newMembers[index] = updatedMember;
+        setMembers(newMembers);
+    }
+
+    const getTotalMealsCount = () => {
+        let sum = 0;
+        members.forEach(element => {
+            sum += +element.dBreakfast;
+            sum += +element.dLunch;
+            sum += +element.dDinner;
+        });
+        return sum;
+    }
 
     return (
-
-        <View style={styles.container}>
-            <View style={styles.topBarContainer}>
-                <View style={styles.topBarDetail}>
-                    <AppText style={styles.label}>Date</AppText>
-                    <CustomDatePicker mode="date" onChange={(date) => setExpenseDate(date)} />
-                    <View style={styles.pickerStyle}>
-                        <RNPickerSelect
-                            onValueChange={(value) => setSelectedResponsibleMemberId(value)}
-                            placeholder={{
-                                label: 'Select One',
-                                value: 0,
-                                color: colors.primary,
-                            }}
-                            items={members.map((member) => {
-                                return {
-                                    label: `${member.firstName} ${member.lastName}`,
-                                    value: member.id
+        <>
+            {loading && <ActivityIndication visible={loading} />}
+            {members?.length > 0 && <View style={styles.container}>
+                <View style={styles.topBarContainer}>
+                    {(mode === "New" || singleExpense !== null) && <View style={styles.topBarDetail}>
+                        <AppText style={styles.label}>Date</AppText>
+                        <CustomDatePicker initaialDate={expenseDate} mode="date" onChange={(date) => {
+                            setExpenseDate(date);
+                        }} />
+                        <View style={styles.pickerStyle}>
+                            <RNPickerSelect
+                                onValueChange={(value) => setSelectedResponsibleMember(value)}
+                                placeholder={{
+                                    label: 'Select One',
+                                    value: null,
+                                    color: colors.primary,
+                                }}
+                                items={members.map((member) => {
+                                    return {
+                                        label: `${member.firstName} ${member.lastName}`,
+                                        value: `${member.firstName} ${member.lastName}`
+                                    }
+                                })
                                 }
-                            })
-                            }
-                            style={pickerSelectStyles}
-                        />
+                                value={selectedResponsibleMember ? selectedResponsibleMember : null}
+                                style={pickerSelectStyles}
+                            />
+                        </View>
+                    </View>}
+                    <View style={styles.topBarDetail}>
+                        <AppText style={styles.label}>Expense</AppText>
+                        <CustomTextInput prefix="৳" value={totalExpense} keyboardType="numeric" onChangeText={(value) => {
+                            setTotalExpense(value);
+                        }} />
+                        <View style={styles.totalMealLabel}>
+                            <AppText>Total Meals: {getTotalMealsCount()}</AppText>
+                        </View>
                     </View>
                 </View>
-                <View style={styles.topBarDetail}>
-                    <AppText style={styles.label}>Expense</AppText>
-                    <CustomTextInput value={totalExpense} keyboardType="numeric" onChangeText={(value) => setTotalExpense(value)} />
-                    <View style={styles.totalMealLabel}>
-                        <AppText>Total Meals: 21</AppText>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.flatListContainer}>
+                        {members.length > 0 &&
+                            <FlatList
+                                data={members}
+                                keyExtractor={member => member.id.toString()}
+                                ItemSeparatorComponent={ListItemSeparator}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item, index }) => <DailyExpenseForm
+                                    member={item}
+                                    index={index}
+                                    onChange={handleOnChangeMeal}
+                                />}
+                            />
+                        }
                     </View>
-                </View>
-            </View>
-            <View style={styles.flatListContainer}>
-                {members.length > 0 &&
-                    <FlatList
-                        data={members}
-                        keyExtractor={member => member.id.toString()}
-                        ItemSeparatorComponent={ListItemSeparator}
-                        showsVerticalScrollIndicator={false}
-                        renderItem={({ item, index }) => (
-                            <View style={[styles.listContainer]}>
-                                <Image style={styles.image} source={require("../../../assets/defaultuser.jpg")} />
-                                <View style={styles.detailContainer}>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                        <AppText>{`${item.firstName} ${item.lastName}`}</AppText>
-                                        <AppText>{`Meals: 2`}</AppText>
-                                    </View>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                        <CustomTextInput value={item.dBreakfast.toString()} keyboardType="numeric" width={60} />
-                                        <CustomTextInput value={item.dLunch.toString()} keyboardType="numeric" width={60} />
-                                        <CustomTextInput value={item.dDinner.toString()} keyboardType="numeric" width={60} />
-                                    </View>
-                                </View>
-                            </View>
-                        )}
-                    />
-                }
-            </View>
-        </View>
+                    {isManager && <AppButton title="Submit" onPress={handleSubmit} />}
+                </ScrollView>
+            </View>}
+        </>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        padding: 10,
+        flex: 1,
         paddingTop: 5,
-        paddingBottom: 120
+        padding: 10,
+        paddingBottom: 0
     },
     topBarContainer: {
         flexDirection: 'row',
@@ -124,35 +224,9 @@ const styles = StyleSheet.create({
         paddingBottom: 2
     },
     flatListContainer: {
-        paddingBottom: 120,
-    },
-    listContainer: {
-        flexDirection: 'row',
-        padding: 15,
-        backgroundColor: colors.lightGray,
-        alignItems: 'center',
-        borderTopEndRadius: 10,
-        borderBottomEndRadius: 10,
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 2,
-        marginBottom: 5,
-    },
-    detailContainer: {
-        marginLeft: 10,
-        justifyContent: 'center',
         flex: 1
     },
-    image: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-    },
+
 });
 const pickerSelectStyles = StyleSheet.create({
     inputIOS: {

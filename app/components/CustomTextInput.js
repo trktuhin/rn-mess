@@ -28,14 +28,15 @@ const styles = StyleSheet.create({
         marginRight: 10
     },
     prefix: {
-        marginRight: 10
+        paddingLeft: 5,
+        color: colors.mediumGray
     },
     textInput: {
         color: colors.mediumGray,
         fontSize: 16,
         fontFamily: Platform.OS === "android" ? "Roboto" : "Avenir",
         flex: 1,
-        paddingLeft: 10
+        paddingLeft: 5
     }
 });
 

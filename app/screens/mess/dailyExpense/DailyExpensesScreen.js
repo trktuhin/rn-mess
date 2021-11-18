@@ -23,7 +23,7 @@ function DailyExpensesScreen({ navigation }) {
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             decodedToken().then((option) => {
-                if (option.messRole == "admin") {
+                if (option.messRole == "admin" || option.messRole == "manager") {
                     navigation.setOptions({
                         headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITDAILYEXPENSE, { id: 0 })} />
                     });
@@ -97,6 +97,13 @@ function DailyExpensesScreen({ navigation }) {
                             totalMeal={item.totalMeal}
                             totalExpense={item.expense}
                             responsibleMember={item.responsibleMember}
+                            onPress={() => navigation.navigate(routes.NEWEDITDAILYEXPENSE,
+                                {
+                                    id: item.id,
+                                    day: item.day,
+                                    responsibleMember: item.responsibleMember,
+                                    totalExpense: item.expense
+                                })}
                         />}
                     />
                 </View>}

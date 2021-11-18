@@ -15,7 +15,7 @@ function DailyExpenseList({ day, totalMeal, totalExpense, responsibleMember, onP
                         <AppText style={styles.primaryText}>{dateFormat(new Date(day), "dd mmm yyyy")}</AppText>
                         <AppText style={styles.secondaryText}>Meals: {totalMeal}</AppText>
                     </View>
-                    <View>
+                    <View style={styles.rightPart}>
                         <AppText style={styles.primaryText}>৳ {totalExpense}</AppText>
                         <AppText style={styles.secondaryText}>By: {responsibleMember}</AppText>
                     </View>
@@ -47,8 +47,11 @@ const styles = StyleSheet.create({
     },
     detailContainer: {
         flexDirection: 'row',
-        flex: .8,
-        justifyContent: 'space-between'
+        flex: .98,
+        // justifyContent: 'space-evenly',
+    },
+    rightPart: {
+        marginLeft: 40
     },
     primaryText: {
         fontWeight: 'bold'

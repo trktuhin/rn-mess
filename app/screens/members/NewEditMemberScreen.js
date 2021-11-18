@@ -65,6 +65,10 @@ function NewEditMemberScreen({ route, navigation }) {
         else {
             setLoading(true);
             memberApi.editMember(model).then(res => {
+                if (!res.ok) {
+                    setLoading(false);
+                    return alert(res.data ? res.data : 'Could not fetch updated information.');
+                }
                 memberApi.getMember(id).then(response => {
                     navigation.navigate(routes.MEMBERDETAILS, { member: response.data })
                 }).catch((_) => console.log('Could not fetch updated information.'))
