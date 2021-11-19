@@ -11,7 +11,7 @@ import ActivityIndication from '../ActivityIndicator';
 import memberApi from '../../api/member';
 
 const messFormValidationSchema = Yup.object().shape({
-    messName: Yup.string().required().min(1).label('Mess Name'),
+    messName: Yup.string().required().min(1).matches(/^[a-zA-Z0-9]*$/, 'Mess Name can not contain any white space').label('Mess Name'),
     location: Yup.string().required().min(1).label('Location'),
     updateTimeFrom: Yup.date().required().label('Update Time From'),
     updateTimeTo: Yup.date().required().label('Update Time To'),
@@ -19,16 +19,15 @@ const messFormValidationSchema = Yup.object().shape({
 });
 
 const messJoinValidationSchema = Yup.object().shape({
-    messName: Yup.string().required().min(1).label('Mess Name'),
+    messName: Yup.string().required().min(1).matches(/^[a-zA-Z0-9]*$/, 'Mess Name can not contain any white space').label('Mess Name'),
     secretCode: Yup.string().required().min(4).max(4).label('Secret Code')
 });
 
 function CreateJoin(props) {
     const [joinMess, setJoinMess] = useState(false);
     const [loading, setLoading] = useState(false);
-    const navigation = useNavigation();
 
-    const handleSubmitMessForm = async (messFormData, { resetForm }) => {
+    const handleSubmitMessForm = async (messFormData) => {
         setLoading(true);
         const model = {
             messName: messFormData.messName,
@@ -55,7 +54,7 @@ function CreateJoin(props) {
         return newDate;
     }
 
-    const handleSubmitMessJoin = async (messJoinData, { resetForm }) => {
+    const handleSubmitMessJoin = async (messJoinData) => {
         setLoading(true);
         const model = {
             messName: messJoinData.messName,

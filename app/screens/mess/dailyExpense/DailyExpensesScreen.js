@@ -74,7 +74,7 @@ function DailyExpensesScreen({ navigation }) {
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {selectedSessionId && <View style={styles.container}>
+            {(selectedSessionId !== null) && <View style={styles.container}>
                 <View style={styles.topBarContainer}>
                     <View style={styles.pickerStyle}>
                         <RNPickerSelect
@@ -103,7 +103,7 @@ function DailyExpensesScreen({ navigation }) {
                     </View>
                 </View>
 
-                {dailyExpenses.length > 0 && <View>
+                {dailyExpenses.length > 0 && <View style={styles.flatListContainer}>
                     <FlatList
                         data={dailyExpenses}
                         keyExtractor={expense => expense.id.toString()}
@@ -135,8 +135,9 @@ function DailyExpensesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         padding: 15,
-        paddingBottom: 120
+        paddingBottom: 0
     },
     topBarContainer: {
         flexDirection: 'row',
@@ -158,6 +159,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: '100%',
         paddingBottom: 150
+    },
+    flatListContainer: {
+        flex: 1
     }
 });
 

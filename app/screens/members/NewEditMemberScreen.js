@@ -41,7 +41,9 @@ function NewEditMemberScreen({ route, navigation }) {
             setLoading(true);
             setMode("Edit");
             memberApi.getMember(id).then(response => {
-                setselectedMember(response.data);
+                if (!isCancelled) {
+                    setselectedMember(response.data);
+                }
             }).catch(err => console.log(err)).finally(() => setLoading(false));
         }
         return () => {

@@ -25,16 +25,18 @@ function LoginScreen({ navigation }) {
 
     useEffect(() => {
         let isCancelled = false;
-        SecureStore.getItemAsync('lastLoggedInMobile').then(data => {
-            if (data) {
-                setLastMobile(data);
-            }
-            else {
+        if (!isCancelled) {
+            SecureStore.getItemAsync('lastLoggedInMobile').then(data => {
+                if (data) {
+                    setLastMobile(data);
+                }
+                else {
+                    setLastMobile("01");
+                }
+            }).catch(err => {
                 setLastMobile("01");
-            }
-        }).catch(err => {
-            setLastMobile("01");
-        });
+            });
+        }
         return () => {
             isCancelled = true;
         };

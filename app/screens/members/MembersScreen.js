@@ -32,12 +32,14 @@ function MembersScreen({ navigation }) {
 
     useEffect(() => {
         let isCancelled = false;
-        if (recievedRequest == false) {
-            return;
-        }
-        initializeMemberRequests();
-        if (recievedRequest == true) {
-            setRecievedRequest(false);
+        if (!isCancelled) {
+            if (recievedRequest == false) {
+                return;
+            }
+            initializeMemberRequests();
+            if (recievedRequest == true) {
+                setRecievedRequest(false);
+            }
         }
         return () => {
             isCancelled = true;
@@ -84,7 +86,7 @@ function MembersScreen({ navigation }) {
         setLoading(true);
         const response = await memberApi.getMemberRequests();
         if (!response.ok) {
-            return alert('Could not fetch member requests');
+            return;
         }
         setmemberRequests(response.data);
         setLoading(false);
@@ -177,7 +179,7 @@ function MembersScreen({ navigation }) {
                     </View>
                 </View>}
                 {memberTab && members.length > 0 && (
-                    <View>
+                    <View style={styles.flatListContainer}>
                         <FlatList data={members}
                             keyExtractor={member => member.id.toString()}
                             ItemSeparatorComponent={ListItemSeparator}
@@ -230,18 +232,19 @@ function MembersScreen({ navigation }) {
                                 </View>
                             </View>
                         </Modal>
-
-                        <FlatList data={memberRequests}
-                            keyExtractor={mr => mr.id.toString()}
-                            ItemSeparatorComponent={ListItemSeparator}
-                            renderItem={({ item }) => <MemberRequestList
-                                name={`${item.user.firstName} ${item.user.lastName}`}
-                                image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
-                                onDeleteMember={() => handleDeleteRequest(item.user.userId)}
-                                onNewMember={() => handleAcceptNewMember(item.user.userId)}
-                                onExistingMember={() => handleOpenModal(item.user)}
-                                isAdmin={isAdmin}
-                            />} />
+                        <View style={styles.flatListContainer}>
+                            <FlatList data={memberRequests}
+                                keyExtractor={mr => mr.id.toString()}
+                                ItemSeparatorComponent={ListItemSeparator}
+                                renderItem={({ item }) => <MemberRequestList
+                                    name={`${item.user.firstName} ${item.user.lastName}`}
+                                    image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
+                                    onDeleteMember={() => handleDeleteRequest(item.user.userId)}
+                                    onNewMember={() => handleAcceptNewMember(item.user.userId)}
+                                    onExistingMember={() => handleOpenModal(item.user)}
+                                    isAdmin={isAdmin}
+                                />} />
+                        </View>
                     </View>
                 )}
             </View>
@@ -250,8 +253,9 @@ function MembersScreen({ navigation }) {
 }
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         padding: 15,
-        paddingBottom: 120
+        paddingBottom: 0
     },
     tabContainer: {
         flexDirection: 'row',
@@ -306,6 +310,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: '100%',
         paddingBottom: 150,
+    },
+    flatListContainer: {
+        flex: 1
     }
 });
 

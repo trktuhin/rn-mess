@@ -31,38 +31,40 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
     useEffect(() => {
         let isCancelled = false;
         LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
-        memberApi.getMembers().then(res => {
-            setMembers(res?.data);
-        }).catch(err => console.log(err))
-            .finally(() => setLoading(false));
-
-        decodedToken().then(option => {
-            if (option?.messRole == "admin" || option?.messRole == "manager") {
-                setIsManager(true);
-                if (id > 0) {
-                    navigation.setOptions({
-                        headerRight: () => (
-                            <IconButton name='trash-can' bgColor={colors.danger} onPress={handleDelete} />
-                        ),
-                    });
-                }
-            }
-            else {
-                if (id > 0) {
-                    navigation.setOptions({ title: "Daily Expense Details" });
-                }
-            }
-        }).catch(err => console.log(err));
-
-        if (id > 0) {
-            setLoading(true);
-            expenseApi.getSignleExpense(id).then(res => {
-                if (res.ok) {
-                    setSingleExpense(res.data.expense);
-                    setMemberMealResource(res.data.memberMeals);
-                }
+        if (!isCancelled) {
+            memberApi.getMembers().then(res => {
+                setMembers(res?.data);
             }).catch(err => console.log(err))
                 .finally(() => setLoading(false));
+
+            decodedToken().then(option => {
+                if (option?.messRole == "admin" || option?.messRole == "manager") {
+                    setIsManager(true);
+                    if (id > 0) {
+                        navigation.setOptions({
+                            headerRight: () => (
+                                <IconButton name='trash-can' bgColor={colors.danger} onPress={handleDelete} />
+                            ),
+                        });
+                    }
+                }
+                else {
+                    if (id > 0) {
+                        navigation.setOptions({ title: "Daily Expense Details" });
+                    }
+                }
+            }).catch(err => console.log(err));
+
+            if (id > 0) {
+                setLoading(true);
+                expenseApi.getSignleExpense(id).then(res => {
+                    if (res.ok) {
+                        setSingleExpense(res.data.expense);
+                        setMemberMealResource(res.data.memberMeals);
+                    }
+                }).catch(err => console.log(err))
+                    .finally(() => setLoading(false));
+            }
         }
         return () => {
             isCancelled = true;

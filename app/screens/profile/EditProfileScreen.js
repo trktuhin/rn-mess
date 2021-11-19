@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { useFormikContext } from 'formik';
 import * as Yup from 'yup';
 
 import { AppForm, AppFormField, SumbitButton, ErrorMessage } from '../../components/form';
@@ -28,17 +27,21 @@ function EditProfileScreen({ route, navigation }) {
     const formRef = useRef();
     const { updateUser } = useAuth();
     useEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <IconButton name='check' bgColor={colors.primary} onPress={() => {
-                    if (formRef.current) {
-                        formRef.current.handleSubmit()
-                    }
-                }} />
-            ),
-        });
-
-
+        let isCancelled = false;
+        if (!isCancelled) {
+            navigation.setOptions({
+                headerRight: () => (
+                    <IconButton name='check' bgColor={colors.primary} onPress={() => {
+                        if (formRef.current) {
+                            formRef.current.handleSubmit()
+                        }
+                    }} />
+                ),
+            });
+        }
+        return () => {
+            isCancelled = true;
+        };
     }, [route, navigation]);
 
     const handleSubmit = async (profileData) => {

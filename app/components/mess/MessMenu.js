@@ -20,7 +20,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Fixed Expense"
                 IconComponent={<Icon name="note-outline" bgColor="#c918a9" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.FIXEDEXPENSES) }} />
 
             <ListItem
                 style={styles.listItem}

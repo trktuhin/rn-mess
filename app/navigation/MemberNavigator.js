@@ -19,7 +19,10 @@ const MemberNavigator = () => (
             options={({ route }) => ({ title: 'Details of ' + route.params.member.firstName })} />
 
         <Stack.Screen name={routes.NEWEDITMEMBER} component={NewEditMemberScreen}
-            options={({ route }) => ({ title: route.params?.id === 0 ? 'New Member' : 'Edit Member' })} />
+            options={({ route }) => (
+                {
+                    title: route.params?.id === 0 ? 'New Member' : 'Edit Member'
+                })} />
     </Stack.Navigator>
 );
 

@@ -25,6 +25,10 @@ function ProfileScreen({ navigation }) {
     }, [navigation]);
 
     const { logout } = useAuth();
+    const handleLogout = () => {
+        // navigation.popToTop();
+        logout();
+    }
 
     return (
         <ScrollView>
@@ -49,7 +53,7 @@ function ProfileScreen({ navigation }) {
                     IconComponent={
                         <Icon name="logout" bgColor={colors.danger} />
                     }
-                    onPress={logout}
+                    onPress={handleLogout}
                 />
             </View>}
         </ScrollView>

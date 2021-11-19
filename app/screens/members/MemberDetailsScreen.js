@@ -137,6 +137,10 @@ function MemberDetailsScreen({ route, navigation }) {
                     <Icon name="cellphone" size={30} iconColor={colors.darkGary} bgColor="transparent" />
                     <AppText style={styles.subtitle}>{member.mobile}</AppText>
                 </View>}
+                {member.email && <View style={styles.iconContainer}>
+                    <Icon name="email" size={30} iconColor={colors.darkGary} bgColor="transparent" />
+                    <AppText style={styles.subtitle}>{member.email}</AppText>
+                </View>}
                 <View style={styles.iconContainer}>
                     <Icon name="food-fork-drink" size={30} iconColor={colors.darkGary} bgColor="transparent" />
                     <AppText style={styles.subtitle}>({member.dBreakfast} + {member.dLunch} + {member.dDinner})</AppText>

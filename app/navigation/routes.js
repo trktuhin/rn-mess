@@ -13,6 +13,8 @@ export default Object.freeze({
     NEWEDITSESSION: "NewEditSession",
     DAILYEXPENSES: "DailyExpenses",
     NEWEDITDAILYEXPENSE: "NewEditDailyExpense",
+    FIXEDEXPENSES: "FixedExpenses",
+    NEWEDITFIXEDEXPENSE: "NewEditFixedExpense",
     PROFILE: "Profile",
     EDITPROFILE: "EditProfile",
     CHANGE_PASSWORD: "ChangePassword"

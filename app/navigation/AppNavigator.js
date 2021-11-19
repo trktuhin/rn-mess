@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import routes from "./routes";
 import Dashboard from '../screens/home/Dashboard';
@@ -10,6 +11,15 @@ import ProfileNavigator from "./ProfileNavigator";
 import MessNavigator from "./MessNavigator";
 
 const Tab = createBottomTabNavigator();
+
+function getIsTabBarShown(route) {
+    const routeName = getFocusedRouteNameFromRoute(route) ?? routes.DASHBOARD;
+
+    switch (routeName) {
+        default:
+            return true;
+    }
+}
 
 const AppNavigator = () => (
     <Tab.Navigator
@@ -29,11 +39,12 @@ const AppNavigator = () => (
 
         <Tab.Screen name="MemberTab"
             component={MemberNavigator}
-            options={{
+            options={({ route }) => ({
                 title: 'Members',
+                tabBarVisible: getIsTabBarShown(route),
                 tabBarIcon: ({ color, size }) =>
                     <MaterialCommunityIcons name="account-group" color={color} size={size} />
-            }} />
+            })} />
 
         <Tab.Screen name={routes.MESS}
             component={MessNavigator}

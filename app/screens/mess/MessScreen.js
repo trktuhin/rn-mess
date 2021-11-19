@@ -14,8 +14,10 @@ function MessScreen({ route, navigation }) {
 
     useEffect(() => {
         let isCancelled = false;
-        intializeMessOption();
-        setLoading(false);
+        if (!isCancelled) {
+            intializeMessOption();
+            setLoading(false);
+        }
         return () => {
             isCancelled = true;
         };
