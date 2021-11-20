@@ -31,7 +31,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Deposits"
                 IconComponent={<Icon name="cash-multiple" bgColor="#18c9a9" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.DEPOSITS) }} />
             <ListItem
                 style={styles.listItem}
                 title="Assigned Dates"

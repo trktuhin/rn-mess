@@ -3,32 +3,28 @@ import { View, StyleSheet, FlatList } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 
 import useAuth from '../../../auth/useAuth';
-import IconButton from '../../../components/IconButton';
 import colors from '../../../config/colors';
 import ActivityIndication from '../../../components/ActivityIndicator';
-import routes from '../../../navigation/routes';
 import sessionApi from '../../../api/session';
-import fixedEpenseApi from '../../../api/fixedExpense';
-import membersApi from '../../../api/member';
+import depositApi from '../../../api/deposit';
 import AppText from '../../../components/AppText';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
-import FixedExpenseList from '../../../components/expense/FixedExpenseList';
+import DepositList from '../../../components/deposit/DepositList';
 
-function FixedExpenseScreen({ navigation }) {
+function DepositScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
-    const [fixedExpenses, setFixedExpenses] = useState([]);
+    const [isManager, setIsManager] = useState(false);
+    const [depositOverviews, setDepositOverviews] = useState([]);
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState(null);
-    const [totalMember, setTotalMember] = useState(0);
     const { decodedToken } = useAuth();
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
+            setLoading(true);
             decodedToken().then((option) => {
                 if (option.messRole == "admin" || option.messRole == "manager") {
-                    navigation.setOptions({
-                        headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.NEWEDITFIXEDEXPENSE, { id: 0 })} />
-                    });
+                    setIsManager(true);
                 }
             }).catch((err) => console.log(err));
             sessionApi.getSessions().then(res => {
@@ -36,42 +32,48 @@ function FixedExpenseScreen({ navigation }) {
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     setSelectedSessionId(initialSessionId);
-                    fixedEpenseApi.getFixedExpenses(initialSessionId).then(response => {
-                        setFixedExpenses(response?.data);
-                        membersApi.getMembers().then(res => {
-                            setTotalMember(res.data?.length ? res.data.length : 0);
-                        }).catch((_) => console.log('Could not get total members'));
-                    }).catch((_) => console.log('Could not get fixed expenses'))
+                    depositApi.getDeposits(initialSessionId).then(response => {
+                        if (response.ok) {
+                            setDepositOverviews(response?.data);
+                        }
+                    }).catch((_) => console.log('Could not get deposits'))
 
                 }
                 else {
                     setSelectedSessionId(0);
-                    fixedEpenseApi.getFixedExpenses(0).then(response => {
-                        setFixedExpenses(response?.data);
-                        membersApi.getMembers().then(res => {
-                            setTotalMember(res.data?.length ? res.data.length : 0);
-                        }).catch((_) => console.log('Could not get total members'));
-                    }).catch((_) => console.log('Could not get fixed expenses'));
+                    depositApi.getDeposits(0).then(response => {
+                        if (response.ok) {
+                            setDepositOverviews(response?.data);
+                        }
+                    }).catch((_) => console.log('Could not get deposits'));
                 }
             }).catch(err => console.log(err)).finally(() => setLoading(false));
         });
         return unsubscribe;
     }, [navigation]);
 
-    const fetchFixedExpenses = (sessionId) => {
+    const fetchDeposits = (sessionId) => {
         setLoading(true);
-        fixedEpenseApi.getFixedExpenses(sessionId).then(response => {
-            setFixedExpenses(response?.data);
-        }).catch((_) => console.log('Could not get daily expenses'))
+        depositApi.getDeposits(sessionId).then(response => {
+            if (response.ok) {
+                setDepositOverviews(response.data);
+            } else {
+                alert(response?.data ? response.data : 'Could not fetch deposits.');
+            }
+        }).catch((_) => console.log('Could not get deposits.'))
             .finally(() => setLoading(false));
     }
-    const getPerMemberCost = () => {
-        let sum = 0;
-        fixedExpenses.forEach(element => {
-            sum += element.amount;
+
+    const getTotalBalance = () => {
+        let totalcredit = 0;
+        let totalDebit = 0;
+        depositOverviews.forEach(element => {
+            totalDebit += element.totalDebit;
+            totalcredit += element.totalCredit;
         });
-        return totalMember !== 0 ? (sum / totalMember).toFixed(2) : 0;
+        return totalDebit - totalcredit;
     }
+
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
@@ -82,7 +84,7 @@ function FixedExpenseScreen({ navigation }) {
                             <RNPickerSelect
                                 onValueChange={(value) => {
                                     setSelectedSessionId(value);
-                                    fetchFixedExpenses(value);
+                                    fetchDeposits(value);
                                 }}
                                 placeholder={{
                                     label: 'Select Session',
@@ -100,35 +102,31 @@ function FixedExpenseScreen({ navigation }) {
                                 style={pickerSelectStyles}
                             />
                         </View>
-                        <View style={styles.mealRateLabel}>
-                            <AppText>Per Member: ৳ {getPerMemberCost()}</AppText>
+                        <View style={styles.secondaryLabel}>
+                            <AppText>Total: ৳ {getTotalBalance().toFixed(2)}</AppText>
                         </View>
                     </View>
-
-                    {fixedExpenses.length > 0 && <View style={styles.flatListContainer}>
-                        <FlatList
-                            data={fixedExpenses}
-                            keyExtractor={expense => expense.id.toString()}
-                            ItemSeparatorComponent={ListItemSeparator}
-                            showsVerticalScrollIndicator={false}
-                            renderItem={({ item }) => <FixedExpenseList
-                                expenseDate={item.effectiveDate}
-                                title={item.title}
-                                totalExpense={item.amount}
-                                remarks={item.remarks}
-                                onPress={() => navigation.navigate(routes.NEWEDITFIXEDEXPENSE,
-                                    {
-                                        id: item.id,
-                                        fixedExpense: item
-                                    })}
-                            />}
-                        />
-                    </View>}
-                    {(fixedExpenses.length === 0 && !loading) &&
-                        <View style={styles.NoDataContainer}>
-                            <AppText>No data found for this session</AppText>
-                        </View>}
-                </View>}
+                    {depositOverviews.length > 0 &&
+                        <View style={styles.flatListContainer}>
+                            <FlatList
+                                data={depositOverviews}
+                                keyExtractor={deposit => deposit.memberId.toString()}
+                                ItemSeparatorComponent={ListItemSeparator}
+                                showsVerticalScrollIndicator={false}
+                                renderItem={({ item }) => <DepositList
+                                    memberId={item.memberId}
+                                    firstName={item.firstName}
+                                    lastName={item.lastName}
+                                    isManager={isManager}
+                                    totalCredit={item.totalCredit}
+                                    totalDebit={item.totalDebit}
+                                    photoName={item.photoName}
+                                />}
+                            />
+                        </View>
+                    }
+                </View>
+            }
         </>
     );
 }
@@ -149,16 +147,10 @@ const styles = StyleSheet.create({
         padding: 10,
         marginRight: 5
     },
-    mealRateLabel: {
+    secondaryLabel: {
         flex: 1,
         padding: 10,
         alignItems: 'flex-end'
-    },
-    NoDataContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
-        paddingBottom: 150
     },
     flatListContainer: {
         flex: 1,
@@ -187,5 +179,4 @@ const pickerSelectStyles = StyleSheet.create({
         paddingRight: 30, // to ensure the text is never behind the icon
     },
 });
-
-export default FixedExpenseScreen;
+export default DepositScreen;

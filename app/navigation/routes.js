@@ -17,5 +17,8 @@ export default Object.freeze({
     NEWEDITFIXEDEXPENSE: "NewEditFixedExpense",
     PROFILE: "Profile",
     EDITPROFILE: "EditProfile",
-    CHANGE_PASSWORD: "ChangePassword"
+    CHANGE_PASSWORD: "ChangePassword",
+    DEPOSITS: "Deposits",
+    ADDWITHDRAWDEPOSIT: "AddWithdrawDeposit",
+    DEPOSITHISTORY: "DepositHistory"
 });

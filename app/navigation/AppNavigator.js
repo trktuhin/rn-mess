@@ -16,6 +16,8 @@ function getIsTabBarShown(route) {
     const routeName = getFocusedRouteNameFromRoute(route) ?? routes.DASHBOARD;
 
     switch (routeName) {
+        case routes.DEPOSITHISTORY:
+            return false;
         default:
             return true;
     }
@@ -41,18 +43,18 @@ const AppNavigator = () => (
             component={MemberNavigator}
             options={({ route }) => ({
                 title: 'Members',
-                tabBarVisible: getIsTabBarShown(route),
                 tabBarIcon: ({ color, size }) =>
                     <MaterialCommunityIcons name="account-group" color={color} size={size} />
             })} />
 
         <Tab.Screen name={routes.MESS}
             component={MessNavigator}
-            options={{
+            options={({ route }) => ({
                 title: 'Mess',
+                tabBarVisible: getIsTabBarShown(route),
                 tabBarIcon: ({ color, size }) =>
                     <MaterialCommunityIcons name="city" color={color} size={size} />
-            }} />
+            })} />
 
         <Tab.Screen
             name="ProfileTab"

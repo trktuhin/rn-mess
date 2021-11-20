@@ -98,20 +98,21 @@ function NewEditSessionScreen({ route, navigation }) {
         >
             <View style={styles.container}>
                 {loading && <ActivityIndication visible={loading} />}
-                {(mode == "New" || (mode !== "New" && selectedSession != null)) && <AppForm
-                    initialValues={{
-                        title: selectedSession?.title ? selectedSession.title : '',
-                        sessionStart: selectedSession?.sessionStart ? selectedSession.sessionStart : '',
-                        sessionEnd: selectedSession?.sessionEnd ? selectedSession.sessionEnd : '',
-                    }}
-                    onSubmit={handleSubmit}
-                    validationSchema={validationSchema}
-                    formRef={formRef}
-                >
-                    <AppFormField editable={isAdmin} icon="calendar-account" name="title" maxLength={255} placeholder="Session Title" />
-                    <AppDatePicker enabled={isAdmin} label="Session Start" initaialDate={selectedSession?.sessionStart ? new Date(selectedSession.sessionStart) : null} name="sessionStart" mode="date" placeholder="Session Start" />
-                    <AppDatePicker enabled={isAdmin} label="Session End" initaialDate={selectedSession?.sessionEnd ? new Date(selectedSession.sessionEnd) : null} name="sessionEnd" mode="date" placeholder="Session End" />
-                </AppForm>}
+                {(mode == "New" || (mode !== "New" && selectedSession != null)) &&
+                    <AppForm
+                        initialValues={{
+                            title: selectedSession?.title ? selectedSession.title : '',
+                            sessionStart: selectedSession?.sessionStart ? selectedSession.sessionStart : '',
+                            sessionEnd: selectedSession?.sessionEnd ? selectedSession.sessionEnd : '',
+                        }}
+                        onSubmit={handleSubmit}
+                        validationSchema={validationSchema}
+                        formRef={formRef}
+                    >
+                        <AppFormField editable={isAdmin} icon="calendar-account" name="title" maxLength={255} placeholder="Session Title" />
+                        <AppDatePicker enabled={isAdmin} label="Session Start" initaialDate={selectedSession?.sessionStart ? new Date(selectedSession.sessionStart) : null} name="sessionStart" mode="date" placeholder="Session Start" />
+                        <AppDatePicker enabled={isAdmin} label="Session End" initaialDate={selectedSession?.sessionEnd ? new Date(selectedSession.sessionEnd) : null} name="sessionEnd" mode="date" placeholder="Session End" />
+                    </AppForm>}
                 <View style={styles.bottomOptions}>
                     {(isAdmin && selectedSession) && <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />}
                 </View>

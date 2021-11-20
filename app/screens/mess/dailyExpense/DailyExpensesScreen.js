@@ -124,7 +124,7 @@ function DailyExpensesScreen({ navigation }) {
                         />}
                     />
                 </View>}
-                {dailyExpenses.length === 0 &&
+                {(dailyExpenses.length === 0 && !loading) &&
                     <View style={styles.NoDataContainer}>
                         <AppText>No data found for this session</AppText>
                     </View>}

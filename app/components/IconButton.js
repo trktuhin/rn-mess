@@ -2,9 +2,9 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from './Icon';
 
-function IconButton({ name, color, bgColor, size, onPress }) {
+function IconButton({ name, color, bgColor, size, onPress, style }) {
     return (
-        <TouchableOpacity style={styles.container} onPress={onPress}>
+        <TouchableOpacity style={[styles.container, style]} onPress={onPress}>
             <Icon name={name} iconColor={color} bgColor={bgColor} size={size} />
         </TouchableOpacity>
     );
