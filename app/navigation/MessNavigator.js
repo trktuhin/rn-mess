@@ -12,6 +12,8 @@ import NewEditFixedExpenseScreen from "../screens/mess/fixedExpense/NewEditFixed
 import DepositScreen from "../screens/mess/deposit/DepositScreen";
 import AddWithdrawScreen from "../screens/mess/deposit/AddWithdrawScreen";
 import DepositHistoryScreen from "../screens/mess/deposit/DepositHistoryScreen";
+import AssignedDatesScreen from "../screens/mess/assignedDate/AssignedDatesScreen";
+import AddAssignedDates from "../screens/mess/assignedDate/AddAssignedDates";
 
 const Stack = createStackNavigator();
 
@@ -28,6 +30,8 @@ const MessNavigator = () => (
         <Stack.Screen name={routes.NEWEDITSESSION} component={NewEditSessionScreen} options={({ route }) => ({ title: route.params?.id === 0 ? 'New Session' : 'Edit Session' })} />
         <Stack.Screen name={routes.NEWEDITDAILYEXPENSE} component={NewEditDailyExpenseScreen} options={({ route }) => ({ title: route.params?.id === 0 ? 'New Daily Expense' : 'Edit Daily Expense' })} />
         <Stack.Screen name={routes.NEWEDITFIXEDEXPENSE} component={NewEditFixedExpenseScreen} options={({ route }) => ({ title: route.params?.id === 0 ? 'New Fixed Expense' : 'Edit Fixed Expense' })} />
+        <Stack.Screen name={routes.ASSIGNEDDATE} component={AssignedDatesScreen} options={{ title: 'Assigned Dates' }} />
+        <Stack.Screen name={routes.ADDASSIGNEDDATE} component={AddAssignedDates} options={{ title: 'Assign New Dates' }} />
     </Stack.Navigator>
 );
 

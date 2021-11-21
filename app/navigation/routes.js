@@ -20,5 +20,7 @@ export default Object.freeze({
     CHANGE_PASSWORD: "ChangePassword",
     DEPOSITS: "Deposits",
     ADDWITHDRAWDEPOSIT: "AddWithdrawDeposit",
-    DEPOSITHISTORY: "DepositHistory"
+    DEPOSITHISTORY: "DepositHistory",
+    ASSIGNEDDATE: "AssignedDate",
+    ADDASSIGNEDDATE: "AddAssingedDate"
 });

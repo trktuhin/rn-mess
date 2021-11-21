@@ -84,6 +84,7 @@ function MembersScreen({ navigation }) {
 
     const initializeMemberRequests = async () => {
         setLoading(true);
+        let resp;
         const response = await memberApi.getMemberRequests();
         if (!response.ok) {
             return;
@@ -196,8 +197,8 @@ function MembersScreen({ navigation }) {
                         <AppText>No member requests found</AppText>
                     </View>
                 }
-                {!memberTab && memberRequests.length > 0 && (
-                    <View>
+                {(!memberTab && memberRequests.length > 0) && (
+                    <>
                         <Modal
                             animationType="slide"
                             transparent={true}
@@ -245,7 +246,7 @@ function MembersScreen({ navigation }) {
                                     isAdmin={isAdmin}
                                 />} />
                         </View>
-                    </View>
+                    </>
                 )}
             </View>
         </>

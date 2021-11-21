@@ -36,7 +36,7 @@ function MessMenu() {
                 style={styles.listItem}
                 title="Assigned Dates"
                 IconComponent={<Icon name="calendar-check" bgColor="#18c956" />}
-                onPress={() => { }} />
+                onPress={() => { navigation.navigate(routes.ASSIGNEDDATE) }} />
             <ListItem
                 style={styles.listItem}
                 title="Update Mess"
