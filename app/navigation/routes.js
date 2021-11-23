@@ -7,6 +7,7 @@ export default Object.freeze({
     MEMBERS: "Members",
     MEMBERDETAILS: "MemberDetails",
     NEWEDITMEMBER: "NewEditMember",
+    VIEWMEALS: "ViewMeals",
     MESS: "Mess",
     UPDATE_MESS: "UpdateMess",
     SESSIONS: "Sessions",

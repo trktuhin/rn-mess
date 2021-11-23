@@ -6,17 +6,21 @@ import MemberDetailsScreen from "../screens/members/MemberDetailsScreen";
 import NewEditMemberScreen from "../screens/members/NewEditMemberScreen";
 import IconButton from "../components/IconButton";
 import colors from "../config/colors";
+import ViewMealsScreen from "../screens/members/ViewMealsScreen";
 
 const Stack = createStackNavigator();
 
 const MemberNavigator = () => (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.amber } }}>
         <Stack.Screen name={routes.MEMBERS} component={MembersScreen}
             options={({ navigation }) => ({
                 title: 'Members'
             })} />
         <Stack.Screen name={routes.MEMBERDETAILS} component={MemberDetailsScreen}
             options={({ route }) => ({ title: 'Details of ' + route.params.member.firstName })} />
+
+        <Stack.Screen name={routes.VIEWMEALS} component={ViewMealsScreen}
+            options={({ route }) => ({ title: 'Meals of ' + route.params.member.firstName })} />
 
         <Stack.Screen name={routes.NEWEDITMEMBER} component={NewEditMemberScreen}
             options={({ route }) => (

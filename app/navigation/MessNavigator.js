@@ -14,11 +14,12 @@ import AddWithdrawScreen from "../screens/mess/deposit/AddWithdrawScreen";
 import DepositHistoryScreen from "../screens/mess/deposit/DepositHistoryScreen";
 import AssignedDatesScreen from "../screens/mess/assignedDate/AssignedDatesScreen";
 import AddAssignedDates from "../screens/mess/assignedDate/AddAssignedDates";
+import colors from "../config/colors";
 
 const Stack = createStackNavigator();
 
 const MessNavigator = () => (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.amber } }}>
         <Stack.Screen name={routes.MESS} component={MessScreen} />
         <Stack.Screen name={routes.UPDATE_MESS} component={UpdateMessScreen} options={{ title: 'Update Mess' }} />
         <Stack.Screen name={routes.SESSIONS} component={SessionsScreen} options={{ title: 'Sessions' }} />

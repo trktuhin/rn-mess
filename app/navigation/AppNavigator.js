@@ -18,6 +18,8 @@ function getIsTabBarShown(route) {
     switch (routeName) {
         case routes.DEPOSITHISTORY:
             return false;
+        case routes.VIEWMEALS:
+            return false;
         default:
             return true;
     }
@@ -43,6 +45,7 @@ const AppNavigator = () => (
             component={MemberNavigator}
             options={({ route }) => ({
                 title: 'Members',
+                tabBarVisible: getIsTabBarShown(route),
                 tabBarIcon: ({ color, size }) =>
                     <MaterialCommunityIcons name="account-group" color={color} size={size} />
             })} />

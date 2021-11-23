@@ -8,5 +8,6 @@ export default {
     darkGary: "#0c0c0c",
     danger: "#ff5252",
     lightYellow: "#ffe66d",
-    darkYellow: "#d1b815"
+    darkYellow: "#d1b815",
+    amber: "#f0a248"
 };

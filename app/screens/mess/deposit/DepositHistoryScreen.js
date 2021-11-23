@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 
 import AppText from '../../../components/AppText';
@@ -127,6 +127,9 @@ function DepositHistoryScreen({ route, navigation }) {
                             />
                         </View>
                     }
+                    {(depositHistory.length == 0) && <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <AppText>No History Found.</AppText>
+                    </View>}
                     <View style={styles.footer}>
                         <View style={styles.footerDetails}>
                             <AppText style={styles.footerText}>Add: ৳ {getTotalAdd().toFixed(2)}</AppText>

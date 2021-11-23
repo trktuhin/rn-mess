@@ -123,6 +123,10 @@ function MemberDetailsScreen({ route, navigation }) {
             ]);
     }
 
+    const handleViewMeals = () => {
+        navigation.navigate(routes.VIEWMEALS, { member: member });
+    }
+
     return (
         <ScrollView>
             {loading && <ActivityIndication visible={loading} />}
@@ -150,7 +154,7 @@ function MemberDetailsScreen({ route, navigation }) {
                 {(!isManual && isAdmin && !isManager && !ownMemberShip) && <DefaultTextButton title="Make Manager" onPress={handleMakeManager} bgColor="darkYellow" />}
                 {(isAdmin && isManager) && <DefaultTextButton title="Remove Managership" bgColor="danger" onPress={handleRemoveManagership} />}
                 {(!isAdmin && ownMemberShip) && <DefaultTextButton title="Remove Membership" bgColor="danger" onPress={handleRemoveMembership} />}
-                <IconButton name="food" bgColor={colors.mediumGray} />
+                <IconButton onPress={handleViewMeals} name="food" bgColor={colors.mediumGray} />
                 {(isAdmin && !ownMemberShip) && <IconButton name="trash-can" bgColor={colors.danger} onPress={handleDelete} />}
             </View>
         </ScrollView>

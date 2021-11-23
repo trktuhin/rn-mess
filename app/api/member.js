@@ -64,6 +64,10 @@ const editMember = (model) => {
     const endPoint = "/members/EditMember";
     return client.post(endPoint, model);
 }
+const viewMeals = (memberId, sessionId = 0) => {
+    const endPoint = `/members/ViewMeals/${memberId}?sessionId=${sessionId}`;
+    return client.get(endPoint);
+}
 
 export default {
     getMember,
@@ -78,5 +82,6 @@ export default {
     deleteMembership,
     makeManager,
     deleteManagership,
-    editMember
+    editMember,
+    viewMeals
 };
