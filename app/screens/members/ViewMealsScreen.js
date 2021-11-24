@@ -14,7 +14,7 @@ function ViewMealsScreen({ route, navigation }) {
     const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState([]);
     const [meals, setMeals] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedSessionId, setSelectedSessionId] = useState(-1);
     const member = route.params?.member ? route.params.member : null;
 
     useEffect(() => {
@@ -24,23 +24,28 @@ function ViewMealsScreen({ route, navigation }) {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
                     membersApi.viewMeals(member.id, initialSessionId).then(response => {
                         if (response.ok) {
                             setMeals(response?.data);
                         }
                     }).catch((_) => console.log('Could not get meals'))
-
+                        .finally(() => {
+                            setLoading(false);
+                            setSelectedSessionId(initialSessionId);
+                        });
                 }
                 else {
-                    setSelectedSessionId(0);
                     membersApi.viewMeals(member.id, 0).then(response => {
                         if (response.ok) {
                             setMeals(response?.data);
                         }
-                    }).catch((_) => console.log('Could not get meals'));
+                    }).catch((_) => console.log('Could not get meals'))
+                        .finally(() => {
+                            setLoading(false);
+                            setSelectedSessionId(0);
+                        })
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err));
         });
         return unsubscribe;
     }, [navigation]);
@@ -88,7 +93,7 @@ function ViewMealsScreen({ route, navigation }) {
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {(sessions.length > 0 && selectedSessionId != null) &&
+            {(selectedSessionId > -1) &&
                 <View style={styles.container}>
                     <View style={styles.topBarContainer}>
                         <View style={styles.pickerStyle}>

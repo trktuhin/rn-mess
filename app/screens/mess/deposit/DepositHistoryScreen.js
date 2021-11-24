@@ -14,7 +14,7 @@ function DepositHistoryScreen({ route, navigation }) {
     const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState([]);
     const [depositHistory, setDepositHistory] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedSessionId, setSelectedSessionId] = useState(-1);
     const membeerId = route.params?.id ? route.params.id : 0;
     const memberName = route.params?.name ? route.params.name : '';
 
@@ -25,23 +25,29 @@ function DepositHistoryScreen({ route, navigation }) {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
                     depositApi.getDepositHistory(membeerId, initialSessionId).then(response => {
                         if (response.ok) {
                             setDepositHistory(response?.data);
                         }
                     }).catch((_) => console.log('Could not get deposit history'))
+                        .finally(() => {
+                            setSelectedSessionId(initialSessionId);
+                            setLoading(false);
+                        });
 
                 }
                 else {
-                    setSelectedSessionId(0);
                     depositApi.getDepositHistory(membeerId, 0).then(response => {
                         if (response.ok) {
                             setDepositHistory(response?.data);
                         }
-                    }).catch((_) => console.log('Could not get deposits'));
+                    }).catch((_) => console.log('Could not get deposits'))
+                        .finally(() => {
+                            setSelectedSessionId(0);
+                            setLoading(false);
+                        });
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err));
         });
         return unsubscribe;
     }, [navigation]);
@@ -82,7 +88,7 @@ function DepositHistoryScreen({ route, navigation }) {
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {(sessions.length > 0 && selectedSessionId != null) &&
+            {(sessions.length > 0 && selectedSessionId > -1) &&
                 <View style={styles.container}>
                     <View style={styles.topBarContainer}>
                         <View style={styles.pickerStyle}>
@@ -137,6 +143,10 @@ function DepositHistoryScreen({ route, navigation }) {
                             <AppText style={styles.footerText}>Balance: ৳ {getTotalBalance().toFixed(2)}</AppText>
                         </View>
                     </View>
+                </View>}
+            {(sessions.length == 0 && !loading) &&
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <AppText>Create a Session. Only Admin can do this.</AppText>
                 </View>}
         </>
     );

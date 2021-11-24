@@ -10,74 +10,70 @@ import membersApi from '../../api/member';
 import expenseApi from '../../api/fixedExpense';
 import ActivityIndication from '../../components/ActivityIndicator';
 import ListItemSeparator from '../../components/list/ListItemSeparator';
+import AppButton from '../../components/AppButton';
 import TabButton from '../../components/TabButton';
 import MemberSummaryList from '../../components/dashboard/MemberSummaryList';
 import MemberMealList from '../../components/dashboard/MemberMealList';
+import useAuth from '../../auth/useAuth';
 
 function Dashboard({ navigation }) {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState([]);
+    const [messOption, setMessOption] = useState();
     const [selectedSessionId, setSelectedSessionId] = useState(null);
     const [summaryTab, setSummaryTab] = useState(true);
     const [membersForMeals, setMembersForMeals] = useState([]);
     const [membersSummary, setMembersSummary] = useState([]);
-    const [mealRate, setMealRate] = useState(null);
-    const [otherExpense, setOtherExpense] = useState(null);
+    const [mealRate, setMealRate] = useState(-1);
+    const [otherExpense, setOtherExpense] = useState(-1);
+    const { decodedToken } = useAuth();
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setLoading(true);
+            decodedToken().then((option) => {
+                setMessOption(option);
+            }).catch((err) => console.log(err));
+
             sessionApi.getSessions().then(res => {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     setSelectedSessionId(initialSessionId);
-                    fetchUpdatedData(initialSessionId).then(() => {
-                        //console.log('test result:');
-                    }).catch(err => console.log(err));
+                    fetchUpdatedData(initialSessionId);
                 }
                 else {
                     setSelectedSessionId(0);
-                    fetchUpdatedData(0).then(() => { }).catch(err => console.log(err))
-                        .finally(() => setLoading(false));
+                    fetchUpdatedData(0);
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err));
         });
         return unsubscribe;
     }, [navigation]);
 
-    const getMembersWithDeposits = async (sessionId) => {
-        const res = await depositApi.getDeposits(sessionId);
-        if (!res.ok) {
-            return alert(res.data ? res.data : 'Could not get data.');
-        }
-        setMembersSummary(res.data);
-    }
-
-    const getMembersForMeals = async () => {
-        const res = await membersApi.getMembers();
-        if (!res.ok) {
-            return alert(res.data ? res.data : 'Could not get data.');
-        }
-        setMembersForMeals(res.data);
-    }
-
-    const getOtherMealRate = async (sessionId) => {
-        console.log("session Id", sessionId);
-        const res = await expenseApi.getOtherMealRate(sessionId);
-        if (!res.ok) {
-            return alert(res.data ? res.data : 'Could not get data.');
-        }
-        setMealRate(res.data.mealRate);
-        setOtherExpense(res.data.otherExpense);
-    }
-
-    const fetchUpdatedData = async (sessionId) => {
+    const fetchUpdatedData = (sessionId, isSummary = true) => {
         setLoading(true);
-        await getMembersWithDeposits(sessionId);
-        await getMembersForMeals();
-        await getOtherMealRate(sessionId);
-        setLoading(false);
+        if (isSummary) {
+            depositApi.getDeposits(sessionId).then(depoRes => {
+                if (depoRes.ok) {
+                    setMembersSummary(depoRes.data);
+                    expenseApi.getOtherMealRate(sessionId).then(otherRes => {
+                        if (otherRes.ok) {
+                            setMealRate(otherRes.data.mealRate);
+                            setOtherExpense(otherRes.data.otherExpense);
+                        }
+                    }).catch(err => console.log(err))
+                        .finally(() => setLoading(false));
+                }
+            })
+        }
+        else {
+            membersApi.getMembers().then(memRes => {
+                if (memRes.ok) {
+                    setMembersForMeals(memRes.data);
+                }
+            }).catch(err => console.log(err))
+                .finally(() => setLoading(false));
+        }
     }
 
     const totalBfCount = () => {
@@ -115,6 +111,16 @@ function Dashboard({ navigation }) {
         });
         return (totalDebit - totalCredit) - (totalMeals * mealRate + (totalMember * otherExpense));
     }
+    const changeTab = (value) => {
+        if (value === "summary") {
+            setSummaryTab(true);
+            fetchUpdatedData(selectedSessionId, true);
+        }
+        else {
+            setSummaryTab(false);
+            fetchUpdatedData(selectedSessionId, false);
+        }
+    }
 
     return (
         <>
@@ -124,75 +130,81 @@ function Dashboard({ navigation }) {
             <>
                 {loading && <ActivityIndication visible={loading} />}
                 <View style={styles.container}>
-                    <View style={styles.tabContainer}>
-                        <View style={styles.tabButtonContainer}>
-                            <TabButton onPress={() => setSummaryTab(true)} isActive={summaryTab} title="Summary" />
+                    {messOption && (parseInt(messOption.MessId) === 0) &&
+                        (<View>
+                            <AppButton title="Create or Join Mess" onPress={() => navigation.navigate(routes.MESS)} />
+                        </View>)}
+                    {(messOption?.MessId > 0) && <>
+                        <View style={styles.tabContainer}>
+                            <View style={styles.tabButtonContainer}>
+                                <TabButton onPress={() => changeTab('summary')} isActive={summaryTab} title="Summary" />
+                            </View>
+                            <View style={styles.tabButtonContainer}>
+                                <TabButton onPress={() => changeTab('meals')} isActive={!summaryTab} title="Meals For Today" />
+                            </View>
                         </View>
-                        <View style={styles.tabButtonContainer}>
-                            <TabButton onPress={() => setSummaryTab(false)} isActive={!summaryTab} title="Meals For Today" />
-                        </View>
-                    </View>
-                    {summaryTab && <>
-                        <View style={styles.topBarContainer}>
-                            <View style={styles.pickerStyle}>
-                                <RNPickerSelect
-                                    onValueChange={(value) => {
-                                        setSelectedSessionId(value);
-                                        fetchUpdatedData(value);
-                                    }}
-                                    placeholder={{
-                                        label: 'Select Session',
-                                        value: 0,
-                                        color: colors.primary,
-                                    }}
-                                    items={sessions.map((session) => {
-                                        return {
-                                            label: `${session.title}`,
-                                            value: session.id
+                        {summaryTab && <>
+                            <View style={styles.topBarContainer}>
+                                <View style={styles.pickerStyle}>
+                                    <RNPickerSelect
+                                        onValueChange={(value) => {
+                                            setSelectedSessionId(value);
+                                            fetchUpdatedData(value);
+                                        }}
+                                        placeholder={{
+                                            label: 'Select Session',
+                                            value: 0,
+                                            color: colors.primary,
+                                        }}
+                                        items={sessions.map((session) => {
+                                            return {
+                                                label: `${session.title}`,
+                                                value: session.id
+                                            }
+                                        })
                                         }
-                                    })
-                                    }
-                                    value={selectedSessionId}
-                                    style={pickerSelectStyles}
-                                />
+                                        value={selectedSessionId}
+                                        style={pickerSelectStyles}
+                                    />
+                                </View>
+                                <View style={styles.secondaryLabel}>
+                                    <AppText>Balance: ৳ {getTotalBalance().toFixed(2)}</AppText>
+                                </View>
                             </View>
-                            <View style={styles.secondaryLabel}>
-                                <AppText>Balance: ৳ {getTotalBalance().toFixed(2)}</AppText>
-                            </View>
-                        </View>
-                        {(membersSummary.length > 0 && mealRate !== null && otherExpense !== null) &&
-                            <View style={styles.flatListContainer}>
-                                <FlatList
-                                    data={membersSummary}
-                                    keyExtractor={ms => ms.memberId.toString()}
-                                    ItemSeparatorComponent={ListItemSeparator}
-                                    showsVerticalScrollIndicator={false}
-                                    renderItem={({ item }) => <MemberSummaryList
-                                        memberSummary={item}
-                                        otherExpense={otherExpense}
-                                        mealRate={mealRate}
-                                    />}
-                                />
-                            </View>
-                        }
-                    </>}
-                    {(!summaryTab && membersForMeals.length > 0) &&
-                        <>
-                            <View style={{ alignItems: 'center', marginBottom: 5 }}>
-                                <AppText style={styles.primaryText}>Breakfast: {totalBfCount()}  Lunch: {totalLchCount()}  Dinner: {totalDnrCount()}</AppText>
-                            </View>
-                            <View style={styles.flatListContainer}>
-                                <FlatList
-                                    data={membersForMeals}
-                                    keyExtractor={memberMeal => memberMeal.id.toString()}
-                                    ItemSeparatorComponent={ListItemSeparator}
-                                    showsVerticalScrollIndicator={false}
-                                    renderItem={({ item }) => <MemberMealList
-                                        member={item}
-                                    />}
-                                />
-                            </View>
+                            {((membersSummary.length > 0) && (mealRate > -1) && (otherExpense > -1) && (!loading)) &&
+                                <View style={styles.flatListContainer}>
+                                    <FlatList
+                                        data={membersSummary}
+                                        keyExtractor={ms => ms.memberId.toString()}
+                                        ItemSeparatorComponent={ListItemSeparator}
+                                        showsVerticalScrollIndicator={false}
+                                        renderItem={({ item }) => <MemberSummaryList
+                                            memberSummary={item}
+                                            otherExpense={otherExpense}
+                                            mealRate={mealRate}
+                                        />}
+                                    />
+                                </View>
+                            }
                         </>}
+                        {(!summaryTab && membersForMeals.length > 0) &&
+                            <>
+                                <View style={{ alignItems: 'center', marginBottom: 5 }}>
+                                    <AppText style={styles.primaryText}>Breakfast: {totalBfCount()}  Lunch: {totalLchCount()}  Dinner: {totalDnrCount()}</AppText>
+                                </View>
+                                <View style={styles.flatListContainer}>
+                                    <FlatList
+                                        data={membersForMeals}
+                                        keyExtractor={memberMeal => memberMeal.id.toString()}
+                                        ItemSeparatorComponent={ListItemSeparator}
+                                        showsVerticalScrollIndicator={false}
+                                        renderItem={({ item }) => <MemberMealList
+                                            member={item}
+                                        />}
+                                    />
+                                </View>
+                            </>}
+                    </>}
                 </View>
             </>
         </>

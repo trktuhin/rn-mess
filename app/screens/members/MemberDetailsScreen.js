@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { View, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Dimensions, ScrollView, Alert } from 'react-native';
+import Image from 'react-native-scalable-image';
 
 import AppText from '../../components/AppText';
 import colors from '../../config/colors';
@@ -130,7 +131,7 @@ function MemberDetailsScreen({ route, navigation }) {
     return (
         <ScrollView>
             {loading && <ActivityIndication visible={loading} />}
-            <Image style={styles.image} source={member.photoName ? { uri: globalVariables.IMAGE_BASE + member.photoName } : require("../../assets/defaultuser.jpg")} />
+            <Image width={Dimensions.get('window').width} source={member.photoName ? { uri: globalVariables.IMAGE_BASE + member.photoName } : require("../../assets/defaultuser.jpg")} />
             <View style={styles.detailContainer}>
                 <AppText style={styles.title}>{member.firstName} {member.lastName}</AppText>
                 {member.profession && <View style={styles.iconContainer}>
@@ -166,10 +167,6 @@ const styles = StyleSheet.create({
     iconContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    image: {
-        width: '100%',
-        height: 400
     },
     detailContainer: {
         padding: 20,

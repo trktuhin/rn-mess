@@ -18,7 +18,7 @@ function FixedExpenseScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
     const [fixedExpenses, setFixedExpenses] = useState([]);
     const [sessions, setSessions] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedSessionId, setSelectedSessionId] = useState(-1);
     const [totalMember, setTotalMember] = useState(0);
     const { decodedToken } = useAuth();
 
@@ -35,22 +35,22 @@ function FixedExpenseScreen({ navigation }) {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
                     fixedEpenseApi.getFixedExpenses(initialSessionId).then(response => {
                         setFixedExpenses(response?.data);
                         membersApi.getMembers().then(res => {
                             setTotalMember(res.data?.length ? res.data.length : 0);
-                        }).catch((_) => console.log('Could not get total members'));
+                        }).catch((_) => console.log('Could not get total members'))
+                            .finally(() => setSelectedSessionId(initialSessionId));
                     }).catch((_) => console.log('Could not get fixed expenses'))
 
                 }
                 else {
-                    setSelectedSessionId(0);
                     fixedEpenseApi.getFixedExpenses(0).then(response => {
                         setFixedExpenses(response?.data);
                         membersApi.getMembers().then(res => {
                             setTotalMember(res.data?.length ? res.data.length : 0);
-                        }).catch((_) => console.log('Could not get total members'));
+                        }).catch((_) => console.log('Could not get total members'))
+                            .finally(() => setSelectedSessionId(0));
                     }).catch((_) => console.log('Could not get fixed expenses'));
                 }
             }).catch(err => console.log(err)).finally(() => setLoading(false));
@@ -75,7 +75,7 @@ function FixedExpenseScreen({ navigation }) {
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {(selectedSessionId !== null) &&
+            {(selectedSessionId > -1) &&
                 <View style={styles.container}>
                     <View style={styles.topBarContainer}>
                         <View style={styles.pickerStyle}>
@@ -124,9 +124,9 @@ function FixedExpenseScreen({ navigation }) {
                             />}
                         />
                     </View>}
-                    {(fixedExpenses.length === 0 && !loading) &&
+                    {((!loading) && (fixedExpenses.length === 0)) &&
                         <View style={styles.NoDataContainer}>
-                            <AppText>No data found for this session</AppText>
+                            <AppText>No Data Found.</AppText>
                         </View>}
                 </View>}
         </>

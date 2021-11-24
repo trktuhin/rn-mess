@@ -17,7 +17,7 @@ function DailyExpensesScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [sessions, setSessions] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedSessionId, setSelectedSessionId] = useState(-1);
     const { decodedToken } = useAuth();
 
     useEffect(() => {
@@ -33,18 +33,22 @@ function DailyExpensesScreen({ navigation }) {
                 setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
                     dailyExpenseApi.getDailyExpenses(initialSessionId).then(response => {
                         setDailyExpenses(response?.data);
                     }).catch((_) => console.log('Could not get daily expenses'))
-                        .finally(() => setLoading(false));
+                        .finally(() => {
+                            setLoading(false);
+                            setSelectedSessionId(initialSessionId);
+                        });
                 }
                 else {
-                    setSelectedSessionId(0);
                     dailyExpenseApi.getDailyExpenses(0).then(response => {
                         setDailyExpenses(response?.data);
                     }).catch((_) => console.log('Could not get daily expenses'))
-                        .finally(() => setLoading(false));
+                        .finally(() => {
+                            setLoading(false);
+                            setSelectedSessionId(0);
+                        });
                 }
             }).catch(err => console.log(err));
         });
@@ -74,7 +78,7 @@ function DailyExpensesScreen({ navigation }) {
     return (
         <>
             {loading && <ActivityIndication visible={loading} />}
-            {(selectedSessionId !== null) && <View style={styles.container}>
+            {(selectedSessionId > -1) && <View style={styles.container}>
                 <View style={styles.topBarContainer}>
                     <View style={styles.pickerStyle}>
                         <RNPickerSelect
@@ -126,7 +130,7 @@ function DailyExpensesScreen({ navigation }) {
                 </View>}
                 {(dailyExpenses.length === 0 && !loading) &&
                     <View style={styles.NoDataContainer}>
-                        <AppText>No data found for this session</AppText>
+                        <AppText>No Data Found.</AppText>
                     </View>}
             </View>}
         </>

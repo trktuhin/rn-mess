@@ -10,6 +10,7 @@ import ListItem from '../../../components/list/ListItem';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import ActivityIndication from '../../../components/ActivityIndicator';
 import routes from '../../../navigation/routes';
+import AppText from '../../../components/AppText';
 
 function SessionsScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
@@ -52,6 +53,10 @@ function SessionsScreen({ navigation }) {
                             subtitle={getMediumDate(item.sessionStart) + ' - ' + getMediumDate(item.sessionEnd)}
                             onPress={() => navigation.navigate(routes.NEWEDITSESSION, { id: item.id, currentSession: item })} />} />
                 )}</View>
+            {!loading && (sessions.length === 0) &&
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <AppText>No Sessions Found.</AppText>
+                </View>}
         </View>
     </>
     );
@@ -59,8 +64,9 @@ function SessionsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         padding: 15,
-        paddingBottom: 120
+        paddingBottom: 0
     }
 });
 
