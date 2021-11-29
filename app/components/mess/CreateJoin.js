@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import * as Yup from 'yup';
-import { useNavigation } from '@react-navigation/native';
 
 import TabButton from '../TabButton';
 import { AppForm, AppFormField, SumbitButton } from '../../components/form';
@@ -26,6 +25,7 @@ const messJoinValidationSchema = Yup.object().shape({
 function CreateJoin(props) {
     const [joinMess, setJoinMess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [pageX, setPageX] = useState(0);
 
     const handleSubmitMessForm = async (messFormData) => {
         setLoading(true);
@@ -69,64 +69,86 @@ function CreateJoin(props) {
     }
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps='handled'
-        >
-            {loading && <ActivityIndication visible={loading} />}
-            <View style={styles.tabContainer}>
-                <View style={styles.tabButtonContainer}>
-                    <TabButton onPress={() => setJoinMess(false)} isActive={!joinMess} title="Create Mess" />
+        <View style={styles.scrollViewContainer}>
+            <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps='handled'
+            >
+                {loading && <ActivityIndication visible={loading} />}
+                <View style={styles.tabContainer}>
+                    <View style={styles.tabButtonContainer}>
+                        <TabButton onPress={() => setJoinMess(false)} isActive={!joinMess} title="Create Mess" />
+                    </View>
+                    <View style={styles.tabButtonContainer}>
+                        <TabButton onPress={() => setJoinMess(true)} isActive={joinMess} title="Join Mess" />
+                    </View>
                 </View>
-                <View style={styles.tabButtonContainer}>
-                    <TabButton onPress={() => setJoinMess(true)} isActive={joinMess} title="Join Mess" />
-                </View>
-            </View>
-            <View style={styles.contentContainer}>
-                {joinMess ? <ScrollView contentContainerStyle={{ flexGrow: 1 }}
-                    keyboardShouldPersistTaps='handled'>
-                    <AppForm
-                        initialValues={{
-                            messName: '',
-                            secretCode: ''
-                        }}
-                        onSubmit={handleSubmitMessJoin}
-                        validationSchema={messJoinValidationSchema}
-                    >
-                        <AppFormField icon="account" name="messName" maxLength={255} placeholder="Mess Name" />
-                        <AppFormField icon="key-star" width={150} name="secretCode" maxLength={4} keyboardType="numeric" placeholder="Secret Code" />
-                        <SumbitButton title="Send Request" />
-                    </AppForm>
-                </ScrollView> :
-                    <ScrollView contentContainerStyle={{ flexGrow: 1 }}
-                        keyboardShouldPersistTaps='handled'
-                    >
+                <View
+                    onTouchStart={e => setPageX(e.nativeEvent.pageX)}
+                    onTouchEnd={e => {
+                        if ((pageX - e.nativeEvent.pageX) > 50) {
+                            if (joinMess) {
+                                setJoinMess(false);
+                            }
+                        }
+                        if ((pageX - e.nativeEvent.pageX) < -50) {
+                            if (joinMess == false) {
+                                setJoinMess(true);
+                            }
+                        }
+                    }}
+                    style={styles.contentContainer}
+                >
+                    {joinMess ? <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+                        keyboardShouldPersistTaps='handled'>
                         <AppForm
                             initialValues={{
                                 messName: '',
-                                location: '',
-                                updateTimeFrom: new Date(),
-                                updateTimeTo: new Date(),
                                 secretCode: ''
                             }}
-                            onSubmit={handleSubmitMessForm}
-                            validationSchema={messFormValidationSchema}
+                            onSubmit={handleSubmitMessJoin}
+                            validationSchema={messJoinValidationSchema}
                         >
-                            <AppFormField icon="city" name="messName" maxLength={255} placeholder="Mess Name" />
-                            <AppFormField icon="home" name="location" maxLength={255} placeholder="Location" />
-                            <AppDatePicker initaialDate={new Date()} label="Update Time From" name="updateTimeFrom" mode="time" placeholder="Update Time From" />
-                            <AppDatePicker initaialDate={new Date()} label="Update Time To" name="updateTimeTo" mode="time" placeholder="Update Time To" />
+                            <AppFormField icon="account" name="messName" maxLength={255} placeholder="Mess Name" />
                             <AppFormField icon="key-star" width={150} name="secretCode" maxLength={4} keyboardType="numeric" placeholder="Secret Code" />
-                            <SumbitButton title="Create Mess" />
+                            <SumbitButton title="Send Request" />
                         </AppForm>
-                    </ScrollView>}
-            </View>
-        </ScrollView>
+                    </ScrollView> :
+                        <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+                            keyboardShouldPersistTaps='handled'
+                        >
+                            <AppForm
+                                initialValues={{
+                                    messName: '',
+                                    location: '',
+                                    updateTimeFrom: new Date(),
+                                    updateTimeTo: new Date(),
+                                    secretCode: ''
+                                }}
+                                onSubmit={handleSubmitMessForm}
+                                validationSchema={messFormValidationSchema}
+                            >
+                                <AppFormField icon="city" name="messName" maxLength={255} placeholder="Mess Name" />
+                                <AppFormField icon="home" name="location" maxLength={255} placeholder="Location" />
+                                <AppDatePicker initaialDate={new Date()} label="Update Time From" name="updateTimeFrom" mode="time" placeholder="Update Time From" />
+                                <AppDatePicker initaialDate={new Date()} label="Update Time To" name="updateTimeTo" mode="time" placeholder="Update Time To" />
+                                <AppFormField icon="key-star" width={150} name="secretCode" maxLength={4} keyboardType="numeric" placeholder="Secret Code" />
+                                <SumbitButton title="Create Mess" />
+                            </AppForm>
+                        </ScrollView>}
+                </View>
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    scrollViewContainer: {
+        height: '100%'
+    },
     contentContainer: {
-        padding: 15
+        padding: 15,
+        flex: 1
     },
     tabContainer: {
         flexDirection: 'row',

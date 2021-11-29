@@ -1,14 +1,13 @@
 {
   "expo": {
-    "name": "MessCity",
-    "slug": "MessCity",
+    "name": "MessDotCity",
+    "slug": "MessDotCity",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./app/assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "icon": "./app/assets/messCity.png",
     "splash": {
-      "image": "./app/assets/splash.png",
-      "resizeMode": "contain",
+      "image": "./app/assets/messSplash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "updates": {
@@ -21,8 +20,10 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "city.mess",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./app/assets/adaptive-icon.png",
+        "foregroundImage": "./app/assets/messCity.png",
         "backgroundColor": "#FFFFFF"
       }
     },

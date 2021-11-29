@@ -10,16 +10,19 @@ import ListItem from '../../components/list/ListItem';
 import Icon from '../../components/Icon';
 import routes from '../../navigation/routes';
 import ActivityIndication from '../../components/ActivityIndicator';
+import useIsMounted from '../../hooks/useIsMounted';
 
 function ProfileScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(false);
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             authStorage.getUser().then(data => {
-                setUserData({ ...data });
-            }).catch(error => console.log(error)).finally(() => setLoading(false));
+                if (isMounted.current) setUserData({ ...data });
+            }).catch(error => console.log(error))
+                .finally(() => { if (isMounted.current) setLoading(false); });
         });
         return unsubscribe;
     }, [navigation]);

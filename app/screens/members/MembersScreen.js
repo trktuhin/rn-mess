@@ -16,10 +16,14 @@ import TabButton from '../../components/TabButton';
 import MemberRequestList from '../../components/member/MemberRequestList';
 import AppText from '../../components/AppText';
 import DefaultTextButton from '../../components/DefaultTextButton';
+import useIsMounted from '../../hooks/useIsMounted';
 
 
 function MembersScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(false);
+    const [pageX, setPageX] = useState(0);
+    const [refreshing, setRefreshing] = useState(false);
     const [messOption, setMessOption] = useState();
     const [members, setMembers] = useState([]);
     const [memberRequests, setmemberRequests] = useState([]);
@@ -31,23 +35,17 @@ function MembersScreen({ navigation }) {
     const { decodedToken, token, recievedRequest, setRecievedRequest } = useAuth();
 
     useEffect(() => {
-        let isCancelled = false;
-        if (!isCancelled) {
-            if (recievedRequest == false) {
-                return;
-            }
-            initializeMemberRequests();
-            if (recievedRequest == true) {
-                setRecievedRequest(false);
-            }
+        if (recievedRequest == false) {
+            return;
         }
-        return () => {
-            isCancelled = true;
-        };
+        initializeMemberRequests();
+        if (recievedRequest == true) {
+            if (isMounted.current) setRecievedRequest(false);
+        }
+
     }, [recievedRequest]);
 
     useEffect(() => {
-        let isCancelled = false;
         decodedToken().then((option) => {
             setMessOption(option);
             if (option.messRole == "admin") {
@@ -58,9 +56,6 @@ function MembersScreen({ navigation }) {
             }
             initializeMembers();
         }).catch((err) => console.log(err));
-        return () => {
-            isCancelled = true;
-        };
     }, [token]);
 
     useEffect(() => {
@@ -73,13 +68,15 @@ function MembersScreen({ navigation }) {
 
 
     const initializeMembers = async () => {
-        setLoading(true);
+        if (isMounted.current) setLoading(true);
         const response = await memberApi.getMembers();
         if (!response.ok) {
             return alert('Could not fetch members');
         }
-        setMembers(response.data);
-        setLoading(false);
+        if (isMounted.current) {
+            setMembers(response.data);
+            setLoading(false);
+        }
     }
 
     const initializeMemberRequests = async () => {
@@ -89,8 +86,10 @@ function MembersScreen({ navigation }) {
         if (!response.ok) {
             return;
         }
-        setmemberRequests(response.data);
-        setLoading(false);
+        if (isMounted.current) {
+            setmemberRequests(response.data);
+            setLoading(false);
+        }
     }
 
     const isMemberTab = (value) => {
@@ -179,75 +178,95 @@ function MembersScreen({ navigation }) {
                         <TabButton onPress={() => isMemberTab(false)} isActive={!memberTab} title="Member Requests" />
                     </View>
                 </View>}
-                {memberTab && members.length > 0 && (
-                    <View style={styles.flatListContainer}>
-                        <FlatList data={members}
-                            keyExtractor={member => member.id.toString()}
-                            ItemSeparatorComponent={ListItemSeparator}
-                            showsVerticalScrollIndicator={false}
-                            renderItem={({ item }) => <ListItem
-                                title={item.firstName + ' ' + item.lastName}
-                                subtitle={item.mobile ? item.mobile : 'Manual'}
-                                image={item.photoName ? { uri: globalVariables.IMAGE_BASE + item.photoName } : require("../../assets/defaultuser.jpg")}
-                                onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
-                    </View>
-                )}
-                {!memberTab && memberRequests.length === 0 &&
-                    <View style={styles.NoDataContainer}>
-                        <AppText>No member requests found</AppText>
-                    </View>
-                }
-                {(!memberTab && memberRequests.length > 0) && (
-                    <>
-                        <Modal
-                            animationType="slide"
-                            transparent={true}
-                            visible={modalVisible}
-                            onRequestClose={() => {
-                                setModalVisible(!modalVisible);
-                            }}
-                        >
-                            <View style={styles.centeredView}>
-                                <View style={styles.modalView}>
-                                    <AppText style={styles.hintModal}>{`${requestedMember?.firstName} ${requestedMember?.lastName}`} will replace the member you select.</AppText>
-                                    <RNPickerSelect
-                                        onValueChange={(value) => setreplacedMemberId(value)}
-                                        placeholder={{
-                                            label: 'Select a member',
-                                            value: null,
-                                            color: colors.primary,
-                                        }}
-                                        items={members.map((member) => {
-                                            return {
-                                                label: `${member.firstName} ${member.lastName}`,
-                                                value: `${member.id}`
+                <View
+                    onTouchStart={e => setPageX(e.nativeEvent.pageX)}
+                    onTouchEnd={e => {
+                        if ((pageX - e.nativeEvent.pageX) > 50) {
+                            if (memberTab === false) {
+                                setMemberTab(true);
+                            }
+                        }
+                        if ((pageX - e.nativeEvent.pageX) < -50) {
+                            if (memberTab) {
+                                setMemberTab(false);
+                            }
+                        }
+                    }}
+                    style={{ flex: 1 }}>
+                    {memberTab && members.length > 0 && (
+                        <View style={styles.flatListContainer}>
+                            <FlatList data={members}
+                                keyExtractor={member => member.id.toString()}
+                                ItemSeparatorComponent={ListItemSeparator}
+                                showsVerticalScrollIndicator={false}
+                                refreshing={refreshing}
+                                onRefresh={() => initializeMembers()}
+                                renderItem={({ item }) => <ListItem
+                                    title={item.firstName + ' ' + item.lastName}
+                                    subtitle={item.mobile ? item.mobile : 'Manual'}
+                                    image={item.photoName ? { uri: globalVariables.IMAGE_BASE + item.photoName } : require("../../assets/defaultuser.jpg")}
+                                    onPress={() => navigation.navigate(routes.MEMBERDETAILS, { member: item })} />} />
+                        </View>
+                    )}
+                    {!memberTab && memberRequests.length === 0 &&
+                        <View style={styles.NoDataContainer}>
+                            <AppText>No member requests found</AppText>
+                        </View>
+                    }
+                    {(!memberTab && memberRequests.length > 0) && (
+                        <>
+                            <Modal
+                                animationType="slide"
+                                transparent={true}
+                                visible={modalVisible}
+                                onRequestClose={() => {
+                                    setModalVisible(!modalVisible);
+                                }}
+                            >
+                                <View style={styles.centeredView}>
+                                    <View style={styles.modalView}>
+                                        <AppText style={styles.hintModal}>{`${requestedMember?.firstName} ${requestedMember?.lastName}`} will replace the member you select.</AppText>
+                                        <RNPickerSelect
+                                            onValueChange={(value) => setreplacedMemberId(value)}
+                                            placeholder={{
+                                                label: 'Select a member',
+                                                value: null,
+                                                color: colors.primary,
+                                            }}
+                                            items={members.map((member) => {
+                                                return {
+                                                    label: `${member.firstName} ${member.lastName}`,
+                                                    value: `${member.id}`
+                                                }
+                                            })
                                             }
-                                        })
-                                        }
-                                        style={pickerSelectStyles}
-                                    />
-                                    <View style={styles.modalFooterButton}>
-                                        <DefaultTextButton title="Close" bgColor="mediumGray" onPress={() => setModalVisible(false)} />
-                                        <DefaultTextButton title="Replace Member" bgColor="primary" onPress={() => handleReplaceMember()} />
+                                            style={pickerSelectStyles}
+                                        />
+                                        <View style={styles.modalFooterButton}>
+                                            <DefaultTextButton title="Close" bgColor="mediumGray" onPress={() => setModalVisible(false)} />
+                                            <DefaultTextButton title="Replace Member" bgColor="primary" onPress={() => handleReplaceMember()} />
+                                        </View>
                                     </View>
                                 </View>
+                            </Modal>
+                            <View style={styles.flatListContainer}>
+                                <FlatList data={memberRequests}
+                                    keyExtractor={mr => mr.id.toString()}
+                                    ItemSeparatorComponent={ListItemSeparator}
+                                    refreshing={refreshing}
+                                    onRefresh={() => initializeMemberRequests()}
+                                    renderItem={({ item }) => <MemberRequestList
+                                        name={`${item.user.firstName} ${item.user.lastName}`}
+                                        image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
+                                        onDeleteMember={() => handleDeleteRequest(item.user.userId)}
+                                        onNewMember={() => handleAcceptNewMember(item.user.userId)}
+                                        onExistingMember={() => handleOpenModal(item.user)}
+                                        isAdmin={isAdmin}
+                                    />} />
                             </View>
-                        </Modal>
-                        <View style={styles.flatListContainer}>
-                            <FlatList data={memberRequests}
-                                keyExtractor={mr => mr.id.toString()}
-                                ItemSeparatorComponent={ListItemSeparator}
-                                renderItem={({ item }) => <MemberRequestList
-                                    name={`${item.user.firstName} ${item.user.lastName}`}
-                                    image={item.user.photoUrl ? { uri: globalVariables.IMAGE_BASE + item.user.photoUrl } : require("../../assets/defaultuser.jpg")}
-                                    onDeleteMember={() => handleDeleteRequest(item.user.userId)}
-                                    onNewMember={() => handleAcceptNewMember(item.user.userId)}
-                                    onExistingMember={() => handleOpenModal(item.user)}
-                                    isAdmin={isAdmin}
-                                />} />
-                        </View>
-                    </>
-                )}
+                        </>
+                    )}
+                </View>
             </View>
         </>
     );
@@ -311,6 +330,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: '100%',
         paddingBottom: 150,
+        width: '100%',
+        backgroundColor: colors.lightGray
     },
     flatListContainer: {
         flex: 1

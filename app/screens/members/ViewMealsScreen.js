@@ -9,8 +9,10 @@ import sessionApi from '../../api/session';
 import membersApi from '../../api/member';
 import ActivityIndication from '../../components/ActivityIndicator';
 import ListItemSeparator from '../../components/list/ListItemSeparator';
+import useIsMounted from '../../hooks/useIsMounted';
 
 function ViewMealsScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState([]);
     const [meals, setMeals] = useState([]);
@@ -19,30 +21,34 @@ function ViewMealsScreen({ route, navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             sessionApi.getSessions().then(res => {
-                setSessions(res?.data);
+                if (isMounted.current) setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     membersApi.viewMeals(member.id, initialSessionId).then(response => {
                         if (response.ok) {
-                            setMeals(response?.data);
+                            if (isMounted.current) setMeals(response?.data);
                         }
                     }).catch((_) => console.log('Could not get meals'))
                         .finally(() => {
-                            setLoading(false);
-                            setSelectedSessionId(initialSessionId);
+                            if (isMounted.current) {
+                                setLoading(false);
+                                setSelectedSessionId(initialSessionId);
+                            }
                         });
                 }
                 else {
                     membersApi.viewMeals(member.id, 0).then(response => {
                         if (response.ok) {
-                            setMeals(response?.data);
+                            if (isMounted.current) setMeals(response?.data);
                         }
                     }).catch((_) => console.log('Could not get meals'))
                         .finally(() => {
-                            setLoading(false);
-                            setSelectedSessionId(0);
+                            if (isMounted.current) {
+                                setLoading(false);
+                                setSelectedSessionId(0);
+                            }
                         })
                 }
             }).catch(err => console.log(err));

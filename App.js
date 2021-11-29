@@ -8,12 +8,16 @@ import AppNavigator from './app/navigation/AppNavigator';
 import authStorage from './app/auth/storage';
 import AuthContext from './app/auth/context';
 import globalVariables from './app/globalVariables';
+import { useNetInfo } from '@react-native-community/netinfo';
+import OfflineNotice from './app/components/OfflineNotice';
 
 export default function App() {
   const [user, setUser] = useState();
   const [token, setToken] = useState(null);
   const [recievedRequest, setRecievedRequest] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const netInfo = useNetInfo();
+
 
   let connectionHub;
 
@@ -84,6 +88,9 @@ export default function App() {
   }, [user]);
 
   if (!isReady) return <AppLoading startAsync={restoreUser} onFinish={() => setIsReady(true)} onError={() => console.log("error")} />
+
+  if (netInfo.type !== "unknown" && netInfo.isInternetReachable === false)
+    return <OfflineNotice />
 
   return (
     <AuthContext.Provider value={{ user, setUser, token, recievedRequest, setRecievedRequest }}>

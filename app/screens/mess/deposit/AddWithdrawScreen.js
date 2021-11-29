@@ -9,6 +9,7 @@ import colors from '../../../config/colors';
 import ActivityIndication from '../../../components/ActivityIndicator';
 import AppDatePicker from '../../../components/form/AppDatePicker';
 import { AppForm, AppFormField, SumbitButton } from '../../../components/form';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 const validationSchema = Yup.object().shape({
     amount: Yup.number().typeError('Amount should be a valid number').min(1).required().label('Amount'),
@@ -17,6 +18,7 @@ const validationSchema = Yup.object().shape({
 });
 
 function AddWithdrawScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState(route?.params?.mode ? route.params.mode : "Add");
     const [selectedMemberId, setSelectedMemberId] = useState(route?.params?.memberId ? route.params.memberId : 0);
@@ -28,9 +30,9 @@ function AddWithdrawScreen({ route, navigation }) {
             if (!res.ok) {
                 return alert(res.data ? res.data : 'Could not get members');
             }
-            setMemberDropdown(res.data);
+            if (isMounted.current) setMemberDropdown(res.data);
         }).catch(err => console.log(err))
-            .finally(() => setLoading(false));
+            .finally(() => { if (isMounted.current) setLoading(false); });
     }, []);
 
     const handleSubmit = (depositForm) => {

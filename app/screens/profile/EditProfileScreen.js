@@ -20,7 +20,7 @@ const validationSchema = Yup.object().shape({
 
 function EditProfileScreen({ route, navigation }) {
     const [selectedImageUri, setselectedImageUri] = useState(globalVariables.IMAGE_BASE + route.params.currentUser.photoUrl);
-    const [currentUser, setCurrentUser] = useState(route.params.currentUser);
+    const currentUser = route.params.currentUser;
     const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(false);
 

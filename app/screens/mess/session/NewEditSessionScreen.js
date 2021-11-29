@@ -9,6 +9,7 @@ import colors from '../../../config/colors';
 import AppDatePicker from '../../../components/form/AppDatePicker';
 import sessionApi from '../../../api/session';
 import useAuth from '../../../auth/useAuth';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 const validationSchema = Yup.object().shape({
     title: Yup.string().required().min(5).label('Session Title'),
@@ -17,6 +18,7 @@ const validationSchema = Yup.object().shape({
 });
 
 function NewEditSessionScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const { decodedToken } = useAuth();
@@ -30,7 +32,7 @@ function NewEditSessionScreen({ route, navigation }) {
         if (!isCancelled) {
             decodedToken().then(option => {
                 if (option?.messRole == "admin") {
-                    setIsAdmin(true);
+                    if (isMounted.current) setIsAdmin(true);
                     navigation.setOptions({
                         headerRight: () => (
                             <IconButton name='check' bgColor={colors.primary} onPress={() => {

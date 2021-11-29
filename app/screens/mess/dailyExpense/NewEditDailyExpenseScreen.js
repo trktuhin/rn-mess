@@ -14,8 +14,10 @@ import expenseApi from '../../../api/dailyExpense';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import DailyExpenseForm from '../../../components/expense/DailyExpenseForm';
 import AppButton from '../../../components/AppButton';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function NewEditDailyExpenseScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [expenseDate, setExpenseDate] = useState(route.params?.day ? new Date(route.params.day) : new Date());
     const [isManager, setIsManager] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -29,46 +31,40 @@ function NewEditDailyExpenseScreen({ route, navigation }) {
     const mode = id === 0 ? "New" : "Edit";
 
     useEffect(() => {
-        let isCancelled = false;
         LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
-        if (!isCancelled) {
-            memberApi.getMembers().then(res => {
-                setMembers(res?.data);
-            }).catch(err => console.log(err))
-                .finally(() => setLoading(false));
+        memberApi.getMembers().then(res => {
+            if (isMounted.current) setMembers(res?.data);
+        }).catch(err => console.log(err))
+            .finally(() => { if (isMounted.current) setLoading(false) });
 
-            decodedToken().then(option => {
-                if (option?.messRole == "admin" || option?.messRole == "manager") {
-                    setIsManager(true);
-                    if (id > 0) {
-                        navigation.setOptions({
-                            headerRight: () => (
-                                <IconButton name='trash-can' bgColor={colors.danger} onPress={handleDelete} />
-                            ),
-                        });
-                    }
+        decodedToken().then(option => {
+            if (option?.messRole == "admin" || option?.messRole == "manager") {
+                if (isMounted.current) setIsManager(true);
+                if (id > 0) {
+                    navigation.setOptions({
+                        headerRight: () => (
+                            <IconButton name='trash-can' bgColor={colors.danger} onPress={handleDelete} />
+                        ),
+                    });
                 }
-                else {
-                    if (id > 0) {
-                        navigation.setOptions({ title: "Daily Expense Details" });
-                    }
-                }
-            }).catch(err => console.log(err));
-
-            if (id > 0) {
-                setLoading(true);
-                expenseApi.getSignleExpense(id).then(res => {
-                    if (res.ok) {
-                        setSingleExpense(res.data.expense);
-                        setMemberMealResource(res.data.memberMeals);
-                    }
-                }).catch(err => console.log(err))
-                    .finally(() => setLoading(false));
             }
+            else {
+                if (id > 0) {
+                    navigation.setOptions({ title: "Daily Expense Details" });
+                }
+            }
+        }).catch(err => console.log(err));
+
+        if (id > 0) {
+            if (isMounted.current) setLoading(true);
+            expenseApi.getSignleExpense(id).then(res => {
+                if (res.ok) {
+                    setSingleExpense(res.data.expense);
+                    setMemberMealResource(res.data.memberMeals);
+                }
+            }).catch(err => console.log(err))
+                .finally(() => { if (isMounted.current) setLoading(false) });
         }
-        return () => {
-            isCancelled = true;
-        };
     }, [route, navigation]);
 
     const handleDelete = () => {

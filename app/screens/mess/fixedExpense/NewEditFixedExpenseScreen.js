@@ -9,6 +9,7 @@ import colors from '../../../config/colors';
 import AppDatePicker from '../../../components/form/AppDatePicker';
 import fixedExpenseApi from '../../../api/fixedExpense';
 import useAuth from '../../../auth/useAuth';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 const validationSchema = Yup.object().shape({
     title: Yup.string().required('Title should not be empty').min(5).max(30).label('Expense Title'),
@@ -19,6 +20,7 @@ const validationSchema = Yup.object().shape({
 
 
 function NewEditFixedExpenseScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(false);
     const [isManager, setIsManager] = useState(false);
     const { decodedToken } = useAuth();
@@ -28,29 +30,24 @@ function NewEditFixedExpenseScreen({ route, navigation }) {
     const mode = id === 0 ? "New" : "Edit";
 
     useEffect(() => {
-        let isCancelled = false;
-        if (!isCancelled) {
-            decodedToken().then(option => {
-                if (option?.messRole == "admin" || option?.messRole == "manager") {
-                    setIsManager(true);
-                    navigation.setOptions({
-                        headerRight: () => (
-                            <IconButton name='check' bgColor={colors.primary} onPress={() => {
-                                if (formRef.current) {
-                                    formRef.current.handleSubmit()
-                                }
-                            }} />
-                        ),
-                    });
-                }
-                else {
-                    navigation.setOptions({ title: "Fixed Expense Details" });
-                }
-            }).catch(err => console.log(err));
-        }
-        return () => {
-            isCancelled = true;
-        };
+        decodedToken().then(option => {
+            if (option?.messRole == "admin" || option?.messRole == "manager") {
+                if (isMounted.current) setIsManager(true);
+                navigation.setOptions({
+                    headerRight: () => (
+                        <IconButton name='check' bgColor={colors.primary} onPress={() => {
+                            if (formRef.current) {
+                                formRef.current.handleSubmit()
+                            }
+                        }} />
+                    ),
+                });
+            }
+            else {
+                navigation.setOptions({ title: "Fixed Expense Details" });
+            }
+        }).catch(err => console.log(err));
+
     }, [route, navigation]);
 
     const handleSubmit = (fixedExpense) => {
@@ -62,18 +59,19 @@ function NewEditFixedExpenseScreen({ route, navigation }) {
             remarks: fixedExpense.remarks
         };
         if (mode == "New") {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             fixedExpenseApi.addFixedExpense(model).then(res => {
                 navigation.pop();
             }).catch((_) => {
                 return alert('Could not add new fixed expense.');
-            }).finally(() => setLoading(false));
+            }).finally(() => { if (isMounted.current) setLoading(false) });
         }
         else {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             fixedExpenseApi.updateFixedExpense(model).then(res => {
                 navigation.pop();
-            }).catch((_) => console.log('Failed to edit.')).finally(() => setLoading(false));
+            }).catch((_) => console.log('Failed to edit.'))
+                .finally(() => { if (isMounted.current) setLoading(false) });
         }
     }
 
@@ -83,13 +81,14 @@ function NewEditFixedExpenseScreen({ route, navigation }) {
                 { text: 'Cancel' },
                 {
                     text: 'Yes', onPress: () => {
-                        setLoading(true);
+                        if (isMounted.current) setLoading(true);
                         fixedExpenseApi.deleteFixedExpense(id).then((response) => {
                             if (!response.ok) {
                                 return alert(response?.data ? response.data : 'Could not delete fixed expense');
                             }
                             navigation.pop();
-                        }).catch((err) => console.log(err)).finally(() => setLoading(false));
+                        }).catch((err) => console.log(err))
+                            .finally(() => { if (isMounted.current) setLoading(false) });
                     }
                 }
             ]);

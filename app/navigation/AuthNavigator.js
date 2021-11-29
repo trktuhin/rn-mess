@@ -5,11 +5,12 @@ import LoginScreen from "../screens/auth/LoginScreen";
 import RegistrationScreen from "../screens/auth/RegistrationScreen";
 import OtpScreen from "../screens/auth/OtpScreen";
 import SuccessfulScreen from "../screens/auth/SuccessfulScreen";
+import colors from "../config/colors";
 
 const Stack = createStackNavigator();
 
 const AuthNavigator = () => (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.amber } }}>
         <Stack.Screen name={routes.LOGIN} component={LoginScreen}
             options={{ title: 'Sign In' }} />
         <Stack.Screen name={routes.REGISTER} component={RegistrationScreen}

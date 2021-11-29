@@ -13,9 +13,13 @@ import ActivityIndication from '../../../components/ActivityIndicator';
 import routes from '../../../navigation/routes';
 import assignedDateApi from '../../../api/assignedDate';
 import AppText from '../../../components/AppText';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function AssignedDatesScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [isManager, setIsManager] = useState(false);
     const [sessions, setSessions] = useState([]);
     const [assingedDates, setAssingedDates] = useState([]);
@@ -24,9 +28,10 @@ function AssignedDatesScreen({ navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
+            setIsLoaded(false);
             decodedToken().then((option) => {
                 if (option.messRole == "admin" || option.messRole == "manager") {
-                    setIsManager(true);
+                    if (isMounted.current) setIsManager(true);
                     navigation.setOptions({
                         headerRight: () => <IconButton name="plus" bgColor={colors.primary} onPress={() => navigation.navigate(routes.ADDASSIGNEDDATE)} />
                     });
@@ -37,27 +42,33 @@ function AssignedDatesScreen({ navigation }) {
                 if (!res.ok) {
                     return alert(res?.data ? res.data : 'Failed to load data');
                 }
-                setSessions(res.data);
+                if (isMounted.current) setSessions(res.data);
 
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
+                    if (isMounted.current) setSelectedSessionId(initialSessionId);
                     assignedDateApi.getAssignedDates(initialSessionId).then(response => {
                         if (response.ok) {
-                            setAssingedDates(response?.data);
+                            if (isMounted.current) setAssingedDates(response?.data);
                         }
                     }).catch((_) => console.log('Could not get assigned dates'));
 
                 }
                 else {
-                    setSelectedSessionId(0);
+                    if (isMounted.current) setSelectedSessionId(0);
                     assignedDateApi.getAssignedDates(0).then(response => {
                         if (response.ok) {
-                            setAssingedDates(response?.data);
+                            if (isMounted.current) setAssingedDates(response?.data);
                         }
                     }).catch((_) => console.log('Could not get assigned dates'));
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err))
+                .finally(() => {
+                    if (isMounted.current) {
+                        setLoading(false);
+                        setIsLoaded(true);
+                    }
+                });
         });
         return unsubscribe;
     }, [navigation]);
@@ -108,8 +119,10 @@ function AssignedDatesScreen({ navigation }) {
                         <View style={styles.pickerStyle}>
                             <RNPickerSelect
                                 onValueChange={(value) => {
-                                    setSelectedSessionId(value);
-                                    fetchAssignedDates(value);
+                                    if (isLoaded && value !== selectedSessionId) {
+                                        setSelectedSessionId(value);
+                                        fetchAssignedDates(value);
+                                    }
                                 }}
                                 placeholder={{
                                     label: 'Select Session',
@@ -138,6 +151,8 @@ function AssignedDatesScreen({ navigation }) {
                                 keyExtractor={date => date.dateAssigned.toString()}
                                 ItemSeparatorComponent={ListItemSeparator}
                                 showsVerticalScrollIndicator={false}
+                                refreshing={refreshing}
+                                onRefresh={() => fetchAssignedDates(selectedSessionId)}
                                 renderItem={({ item }) => (
                                     <View style={[styles.itemContainer, { paddingRight: isManager ? 0 : 10 }]}>
                                         <View style={styles.rowDetailContainer}>

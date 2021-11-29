@@ -9,8 +9,10 @@ import depositApi from '../../../api/deposit';
 import ActivityIndication from '../../../components/ActivityIndicator';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import DepositHistoryList from '../../../components/deposit/DepositHistoryList';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function DepositHistoryScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState([]);
     const [depositHistory, setDepositHistory] = useState([]);
@@ -20,31 +22,35 @@ function DepositHistoryScreen({ route, navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             sessionApi.getSessions().then(res => {
-                setSessions(res?.data);
+                if (isMounted.current) setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     depositApi.getDepositHistory(membeerId, initialSessionId).then(response => {
                         if (response.ok) {
-                            setDepositHistory(response?.data);
+                            if (isMounted.current) setDepositHistory(response?.data);
                         }
                     }).catch((_) => console.log('Could not get deposit history'))
                         .finally(() => {
-                            setSelectedSessionId(initialSessionId);
-                            setLoading(false);
+                            if (isMounted.current) {
+                                setSelectedSessionId(initialSessionId);
+                                setLoading(false);
+                            }
                         });
 
                 }
                 else {
                     depositApi.getDepositHistory(membeerId, 0).then(response => {
                         if (response.ok) {
-                            setDepositHistory(response?.data);
+                            if (isMounted.current) setDepositHistory(response?.data);
                         }
                     }).catch((_) => console.log('Could not get deposits'))
                         .finally(() => {
-                            setSelectedSessionId(0);
-                            setLoading(false);
+                            if (isMounted.current) {
+                                setSelectedSessionId(0);
+                                setLoading(false);
+                            }
                         });
                 }
             }).catch(err => console.log(err));

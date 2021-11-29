@@ -9,6 +9,7 @@ import ActivityIndication from '../../components/ActivityIndicator';
 import IconButton from '../../components/IconButton';
 import colors from '../../config/colors';
 import ListItem from '../../components/list/ListItem';
+import useIsMounted from '../../hooks/useIsMounted';
 
 const messFormValidationSchema = Yup.object().shape({
     messName: Yup.string().required().min(1).label('Mess Name'),
@@ -19,6 +20,7 @@ const messFormValidationSchema = Yup.object().shape({
 });
 
 function UpdateMessScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
     const [messData, setMessData] = useState();
 
@@ -26,9 +28,10 @@ function UpdateMessScreen({ navigation }) {
         const unsubscribe = navigation.addListener('focus', () => {
             messApi.getMess().then(response => {
                 if (response?.data !== "You don't own a mess") {
-                    setMessData(response.data);
+                    if (isMounted.current) setMessData(response.data);
                 }
-            }).catch(error => console.log(error)).finally(() => setLoading(false));
+            }).catch(error => console.log(error))
+                .finally(() => { if (isMounted.current) setLoading(false); });
         });
         return unsubscribe;
     }, [navigation]);

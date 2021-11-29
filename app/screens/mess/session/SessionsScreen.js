@@ -11,9 +11,12 @@ import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import ActivityIndication from '../../../components/ActivityIndicator';
 import routes from '../../../navigation/routes';
 import AppText from '../../../components/AppText';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function SessionsScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [sessions, setSessions] = useState([]);
     const { decodedToken } = useAuth();
 
@@ -33,21 +36,30 @@ function SessionsScreen({ navigation }) {
             }).catch((err) => console.log(err));
 
             sessionApi.getSessions().then(res => {
-                setSessions(res.data);
+                if (isMounted.current) setSessions(res.data);
             }).catch((_) => console.log('Could not get sessions.'))
-                .finally((_) => setLoading(false));
+                .finally((_) => { if (isMounted.current) setLoading(false); });
         });
         return unsubscribe;
     }, [navigation]);
 
+    const fetchSessions = () => {
+        sessionApi.getSessions().then(res => {
+            setSessions(res.data);
+        }).catch((_) => console.log('Could not get sessions.'))
+            .finally((_) => { if (isMounted.current) setLoading(false); });
+    }
+
     return (<>
         {loading && <ActivityIndication visible={loading} />}
         <View style={styles.container}>
-            <View>
+            <View style={styles.flatListContainer}>
                 {sessions.length > 0 && (
                     <FlatList data={sessions}
                         keyExtractor={session => session.id.toString()}
                         ItemSeparatorComponent={ListItemSeparator}
+                        refreshing={refreshing}
+                        onRefresh={() => fetchSessions()}
                         renderItem={({ item }) => <ListItem
                             title={item.title}
                             subtitle={getMediumDate(item.sessionStart) + ' - ' + getMediumDate(item.sessionEnd)}
@@ -67,6 +79,9 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 15,
         paddingBottom: 0
+    },
+    flatListContainer: {
+        flex: 1,
     }
 });
 

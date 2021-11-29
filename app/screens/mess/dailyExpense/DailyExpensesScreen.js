@@ -12,9 +12,13 @@ import dailyExpenseApi from '../../../api/dailyExpense';
 import AppText from '../../../components/AppText';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import DailyExpenseList from '../../../components/expense/DailyExpenseList';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function DailyExpensesScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
+    const [isloaded, setIsLoaded] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState(-1);
@@ -22,6 +26,7 @@ function DailyExpensesScreen({ navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
+            setIsLoaded(false);
             decodedToken().then((option) => {
                 if (option.messRole == "admin" || option.messRole == "manager") {
                     navigation.setOptions({
@@ -30,24 +35,30 @@ function DailyExpensesScreen({ navigation }) {
                 }
             }).catch((err) => console.log(err));
             sessionApi.getSessions().then(res => {
-                setSessions(res?.data);
+                if (isMounted.current) setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     dailyExpenseApi.getDailyExpenses(initialSessionId).then(response => {
-                        setDailyExpenses(response?.data);
+                        if (isMounted.current) setDailyExpenses(response?.data);
                     }).catch((_) => console.log('Could not get daily expenses'))
                         .finally(() => {
-                            setLoading(false);
-                            setSelectedSessionId(initialSessionId);
+                            if (isMounted.current) {
+                                setLoading(false);
+                                setSelectedSessionId(initialSessionId);
+                                setIsLoaded(true);
+                            }
                         });
                 }
                 else {
                     dailyExpenseApi.getDailyExpenses(0).then(response => {
-                        setDailyExpenses(response?.data);
+                        if (isMounted.current) setDailyExpenses(response?.data);
                     }).catch((_) => console.log('Could not get daily expenses'))
                         .finally(() => {
-                            setLoading(false);
-                            setSelectedSessionId(0);
+                            if (isMounted.current) {
+                                setLoading(false);
+                                setSelectedSessionId(0);
+                                setIsLoaded(true);
+                            }
                         });
                 }
             }).catch(err => console.log(err));
@@ -56,11 +67,11 @@ function DailyExpensesScreen({ navigation }) {
     }, [navigation]);
 
     const fetchDailyExpenses = (sessionId) => {
-        setLoading(true);
+        if (isMounted.current) setLoading(true);
         dailyExpenseApi.getDailyExpenses(sessionId).then(response => {
-            setDailyExpenses(response?.data);
+            if (isMounted.current) setDailyExpenses(response?.data);
         }).catch((_) => console.log('Could not get daily expenses'))
-            .finally(() => setLoading(false));
+            .finally(() => { if (isMounted.current) setLoading(false) });
     }
 
     const geMealRate = () => {
@@ -83,8 +94,10 @@ function DailyExpensesScreen({ navigation }) {
                     <View style={styles.pickerStyle}>
                         <RNPickerSelect
                             onValueChange={(value) => {
-                                setSelectedSessionId(value);
-                                fetchDailyExpenses(value);
+                                if (isloaded && value !== selectedSessionId) {
+                                    setSelectedSessionId(value);
+                                    fetchDailyExpenses(value);
+                                }
                             }}
                             placeholder={{
                                 label: 'Select Session',
@@ -113,6 +126,8 @@ function DailyExpensesScreen({ navigation }) {
                         keyExtractor={expense => expense.id.toString()}
                         ItemSeparatorComponent={ListItemSeparator}
                         showsVerticalScrollIndicator={false}
+                        refreshing={refreshing}
+                        onRefresh={() => fetchDailyExpenses(selectedSessionId)}
                         renderItem={({ item }) => <DailyExpenseList
                             day={item.day}
                             totalMeal={item.totalMeal}

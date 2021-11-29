@@ -8,6 +8,7 @@ import IconButton from '../../components/IconButton';
 import colors from '../../config/colors';
 import memberApi from '../../api/member';
 import routes from '../../navigation/routes';
+import useIsMounted from '../../hooks/useIsMounted';
 
 const validationSchema = Yup.object().shape({
     firstName: Yup.string().required().min(1).label('First Name'),
@@ -19,6 +20,7 @@ const validationSchema = Yup.object().shape({
 
 
 function NewEditMemberScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [mode, setMode] = useState("New");
     const [loading, setLoading] = useState(false);
     const [selectedMember, setselectedMember] = useState(null);
@@ -26,7 +28,6 @@ function NewEditMemberScreen({ route, navigation }) {
     const id = route.params?.id;
     const isManual = route.params?.isManualMember;
     useEffect(() => {
-        let isCancelled = false;
         navigation.setOptions({
             headerRight: () => (
                 <IconButton name='check' bgColor={colors.primary} onPress={() => {
@@ -38,17 +39,14 @@ function NewEditMemberScreen({ route, navigation }) {
         });
 
         if (id !== 0) {
-            setLoading(true);
+            if (isMounted.current) setLoading(true);
             setMode("Edit");
             memberApi.getMember(id).then(response => {
-                if (!isCancelled) {
+                if (isMounted.current) {
                     setselectedMember(response.data);
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err)).finally(() => { if (isMounted.current) setLoading(false); });
         }
-        return () => {
-            isCancelled = true;
-        };
     }, [route, navigation]);
 
     const handleSubmit = (member) => {

@@ -9,8 +9,10 @@ import assignedDateApi from '../../../api/assignedDate';
 import membersApi from '../../../api/member';
 import colors from '../../../config/colors';
 import AppButton from '../../../components/AppButton';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function AddAssignedDates({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState("Range");
     const [assignedPerson, setAssignedPerson] = useState("");
@@ -27,9 +29,9 @@ function AddAssignedDates({ navigation }) {
     useEffect(() => {
         membersApi.getMembers().then(res => {
             if (res.ok) {
-                setMembers(res.data);
+                if (isMounted.current) setMembers(res.data);
             }
-        }).catch(err => console.log(err)).finally(() => setLoading(false));
+        }).catch(err => console.log(err)).finally(() => { if (isMounted.current) setLoading(false); });
     }, []);
 
     const checkCustomDateDuplication = (index) => {

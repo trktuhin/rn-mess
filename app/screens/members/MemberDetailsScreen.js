@@ -12,8 +12,10 @@ import memberApi from '../../api/member';
 import ActivityIndication from '../../components/ActivityIndicator';
 import useAuth from '../../auth/useAuth';
 import DefaultTextButton from '../../components/DefaultTextButton';
+import useIsMounted from '../../hooks/useIsMounted';
 
 function MemberDetailsScreen({ route, navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isManager, setIsManager] = useState(false);
@@ -23,18 +25,19 @@ function MemberDetailsScreen({ route, navigation }) {
     const member = route.params.member;
 
     useLayoutEffect(() => {
+
         decodedToken().then(option => {
             if (member.userId !== null) {
-                setIsManual(false);
+                if (isMounted.current) setIsManual(false);
             }
             if (option?.messRole == "admin") {
-                setIsAdmin(true);
+                if (isMounted.current) setIsAdmin(true);
             }
             if (member.messRole == "manager") {
-                setIsManager(true);
+                if (isMounted.current) setIsManager(true);
             }
             if (option?.nameid == member?.userId) {
-                setOwnMembership(true);
+                if (isMounted.current) setOwnMembership(true);
             }
             if ((member?.userId == null && option?.messRole == "admin") || option?.nameid == member?.userId) {
                 navigation.setOptions({

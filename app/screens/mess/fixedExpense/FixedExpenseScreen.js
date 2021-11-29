@@ -13,9 +13,13 @@ import membersApi from '../../../api/member';
 import AppText from '../../../components/AppText';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import FixedExpenseList from '../../../components/expense/FixedExpenseList';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function FixedExpenseScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [refreshing, setRefresing] = useState(false);
     const [fixedExpenses, setFixedExpenses] = useState([]);
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState(-1);
@@ -24,6 +28,7 @@ function FixedExpenseScreen({ navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
+            setIsLoaded(false);
             decodedToken().then((option) => {
                 if (option.messRole == "admin" || option.messRole == "manager") {
                     navigation.setOptions({
@@ -31,39 +36,50 @@ function FixedExpenseScreen({ navigation }) {
                     });
                 }
             }).catch((err) => console.log(err));
+
             sessionApi.getSessions().then(res => {
-                setSessions(res?.data);
+                if (isMounted.current) setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
                     fixedEpenseApi.getFixedExpenses(initialSessionId).then(response => {
-                        setFixedExpenses(response?.data);
+                        if (isMounted.current) setFixedExpenses(response?.data);
                         membersApi.getMembers().then(res => {
-                            setTotalMember(res.data?.length ? res.data.length : 0);
+                            if (isMounted.current) setTotalMember(res.data?.length ? res.data.length : 0);
                         }).catch((_) => console.log('Could not get total members'))
-                            .finally(() => setSelectedSessionId(initialSessionId));
+                            .finally(() => {
+                                if (isMounted.current) {
+                                    setSelectedSessionId(initialSessionId);
+                                    setIsLoaded(true);
+                                }
+                            });
                     }).catch((_) => console.log('Could not get fixed expenses'))
 
                 }
                 else {
                     fixedEpenseApi.getFixedExpenses(0).then(response => {
-                        setFixedExpenses(response?.data);
+                        if (isMounted.current) setFixedExpenses(response?.data);
                         membersApi.getMembers().then(res => {
-                            setTotalMember(res.data?.length ? res.data.length : 0);
+                            if (isMounted.current) setTotalMember(res.data?.length ? res.data.length : 0);
                         }).catch((_) => console.log('Could not get total members'))
-                            .finally(() => setSelectedSessionId(0));
+                            .finally(() => {
+                                if (isMounted.current) {
+                                    setSelectedSessionId(0);
+                                    setIsLoaded(true);
+                                }
+                            });
                     }).catch((_) => console.log('Could not get fixed expenses'));
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err)).finally(() => { if (isMounted.current) setLoading(false) });
         });
         return unsubscribe;
     }, [navigation]);
 
     const fetchFixedExpenses = (sessionId) => {
-        setLoading(true);
+        if (isMounted.current) setLoading(true);
         fixedEpenseApi.getFixedExpenses(sessionId).then(response => {
-            setFixedExpenses(response?.data);
+            if (isMounted.current) setFixedExpenses(response?.data);
         }).catch((_) => console.log('Could not get daily expenses'))
-            .finally(() => setLoading(false));
+            .finally(() => { if (isMounted.current) setLoading(false) });
     }
     const getPerMemberCost = () => {
         let sum = 0;
@@ -81,8 +97,10 @@ function FixedExpenseScreen({ navigation }) {
                         <View style={styles.pickerStyle}>
                             <RNPickerSelect
                                 onValueChange={(value) => {
-                                    setSelectedSessionId(value);
-                                    fetchFixedExpenses(value);
+                                    if (isLoaded && value !== selectedSessionId) {
+                                        setSelectedSessionId(value);
+                                        fetchFixedExpenses(value);
+                                    }
                                 }}
                                 placeholder={{
                                     label: 'Select Session',
@@ -111,6 +129,8 @@ function FixedExpenseScreen({ navigation }) {
                             keyExtractor={expense => expense.id.toString()}
                             ItemSeparatorComponent={ListItemSeparator}
                             showsVerticalScrollIndicator={false}
+                            refreshing={refreshing}
+                            onRefresh={() => fetchFixedExpenses(selectedSessionId)}
                             renderItem={({ item }) => <FixedExpenseList
                                 expenseDate={item.effectiveDate}
                                 title={item.title}

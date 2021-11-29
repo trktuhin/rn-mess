@@ -10,9 +10,13 @@ import depositApi from '../../../api/deposit';
 import AppText from '../../../components/AppText';
 import ListItemSeparator from '../../../components/list/ListItemSeparator';
 import DepositList from '../../../components/deposit/DepositList';
+import useIsMounted from '../../../hooks/useIsMounted';
 
 function DepositScreen({ navigation }) {
+    const isMounted = useIsMounted();
     const [loading, setLoading] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [isManager, setIsManager] = useState(false);
     const [depositOverviews, setDepositOverviews] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -21,33 +25,40 @@ function DepositScreen({ navigation }) {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setLoading(true);
+            setIsLoaded(false);
+            if (isMounted.current) setLoading(true);
             decodedToken().then((option) => {
                 if (option.messRole == "admin" || option.messRole == "manager") {
-                    setIsManager(true);
+                    if (isMounted.current) setIsManager(true);
                 }
             }).catch((err) => console.log(err));
             sessionApi.getSessions().then(res => {
-                setSessions(res?.data);
+                if (isMounted.current) setSessions(res?.data);
                 if (res?.data.length > 0) {
                     const initialSessionId = res.data[0].id;
-                    setSelectedSessionId(initialSessionId);
+                    if (isMounted.current) setSelectedSessionId(initialSessionId);
                     depositApi.getDeposits(initialSessionId).then(response => {
                         if (response.ok) {
-                            setDepositOverviews(response?.data);
+                            if (isMounted.current) setDepositOverviews(response?.data);
                         }
                     }).catch((_) => console.log('Could not get deposits'))
 
                 }
                 else {
-                    setSelectedSessionId(0);
+                    if (isMounted.current) setSelectedSessionId(0);
                     depositApi.getDeposits(0).then(response => {
                         if (response.ok) {
-                            setDepositOverviews(response?.data);
+                            if (isMounted.current) setDepositOverviews(response?.data);
                         }
                     }).catch((_) => console.log('Could not get deposits'));
                 }
-            }).catch(err => console.log(err)).finally(() => setLoading(false));
+            }).catch(err => console.log(err))
+                .finally(() => {
+                    if (isMounted.current) {
+                        setLoading(false);
+                        setIsLoaded(true);
+                    }
+                });
         });
         return unsubscribe;
     }, [navigation]);
@@ -83,8 +94,10 @@ function DepositScreen({ navigation }) {
                         <View style={styles.pickerStyle}>
                             <RNPickerSelect
                                 onValueChange={(value) => {
-                                    setSelectedSessionId(value);
-                                    fetchDeposits(value);
+                                    if (isLoaded && value !== selectedSessionId) {
+                                        setSelectedSessionId(value);
+                                        fetchDeposits(value);
+                                    }
                                 }}
                                 placeholder={{
                                     label: 'Select Session',
@@ -113,6 +126,8 @@ function DepositScreen({ navigation }) {
                                 keyExtractor={deposit => deposit.memberId.toString()}
                                 ItemSeparatorComponent={ListItemSeparator}
                                 showsVerticalScrollIndicator={false}
+                                refreshing={refreshing}
+                                onRefresh={() => fetchDeposits(selectedSessionId)}
                                 renderItem={({ item }) => <DepositList
                                     memberId={item.memberId}
                                     firstName={item.firstName}
